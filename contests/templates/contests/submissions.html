@@ -1,0 +1,16 @@
+{% extends 'contests/contest_base.html' %}
+
+
+
+{% block contest_content %}
+
+<p>提出一覧</p>
+{% comment %} 開催中は自分の提出しか見れない {% endcomment %}
+{% comment %} コンテスト終了後は全ての提出が見られる {% endcomment %}
+<ul>
+{% for submission in submissions %}
+    <li><a href="{% url 'contests:submission_detail' contest.short_name submission.pk %}">{{submission}}</a></li>
+{% endfor %}
+</ul>
+
+{% endblock contest_content %}

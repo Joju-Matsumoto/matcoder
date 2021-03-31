@@ -1,0 +1,21 @@
+{% extends 'base.html' %}
+
+
+{% block content %}
+{% comment %} ログインフォーム {% endcomment %}
+<form action="" method="POST">
+    {% csrf_token %}
+    {% for field in form %}
+        <p>
+            {{field.label_tag}}
+            {{field}}
+        </p>
+    {% endfor %}
+    {% for error in form.non_field_errors %}
+        <p>{{error}}</p>
+    {% endfor %}
+    <button type="submit">ログイン</button>
+    または
+    <button type="button" onclick="location.href='{% url "users:signup" %}';">新規登録</button>
+</form>
+{% endblock content %}

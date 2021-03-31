@@ -1,0 +1,24 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="container"></div>
+{% if user.is_authenticated %}
+    <h2>ログイン済</h2>
+    <p>こんにちは、{{user.username}}さん！</p>
+    {% if user.is_superuser %}
+    <p>管理者アカウントです</p>
+    <a href="{% url 'admin:index' %}">アドミン</a>
+    {% endif %}
+    <a href="{% url 'users:logout' %}">ログアウト</a>
+{% else %}
+    <h2>ゲストユーザー</h2>
+    <p>あなたはゲストユーザーです</p>
+    <p>
+        こちらから<a href="{% url 'users:signup' %}">サインアップ</a><br>
+        もしくは<a href="{% url 'users:login' %}">ログイン</a>
+    </p>
+{% endif %}
+a<br>a<br>a<br>a<br>a<br>a<br>a<br>a<br>a<br>a<br>a<br>a<br>a<br>a<br>a<br>
+a<br>a<br>a<br>a<br>a<br>a<br>a<br>a<br>a<br>a<br>a<br>a<br>a<br>a<br>a<br>
+a<br>a<br>a<br>a<br>a<br>a<br>a<br>a<br>a<br>a<br>a<br>a<br>a<br>a<br>a<br>
+{% endblock content %}

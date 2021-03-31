@@ -1,0 +1,12 @@
+body {
+    background-color: green;
+}
+
+main {
+    margin: 60px 15px 0;
+}
+
+/* ロゴ */
+#img_logo {
+    height: 30px;
+}

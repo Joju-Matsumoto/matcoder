@@ -1,0 +1,23 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<h2>コンテスト一覧</h2>
+<h3>開催中のコンテスト</h3>
+{% for contest in live_contests %}
+    <a href="{% url 'contests:contest_detail' contest.short_name %}">
+        {{contest}}
+    </a>
+{% endfor %}
+<h3>開催予定のコンテスト</h3>
+{% for contest in future_contests %}
+    <a href="{% url 'contests:contest_detail' contest.short_name %}">
+        {{contest}}
+    </a>
+{% endfor %}
+<h3>過去のコンテスト</h3>
+{% for contest in past_contests %}
+    <a href="{% url 'contests:contest_detail' contest.short_name %}">
+        {{contest}}
+    </a>
+{% endfor %}
+{% endblock content %}

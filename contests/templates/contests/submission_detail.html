@@ -1,0 +1,12 @@
+{% extends 'contests/contest_base.html' %}
+
+
+
+{% block contest_content %}
+
+<h2>提出 #{{submission.pk}}</h2>
+<p>解答：{{submission.answer}}</p>
+
+<p>問題：<a href="{% url 'contests:problem_detail' contest.short_name problem.pk %}">{{problem}}</a></p>
+
+{% endblock contest_content %}

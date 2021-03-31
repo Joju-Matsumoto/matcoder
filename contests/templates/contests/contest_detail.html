@@ -1,0 +1,26 @@
+{% extends 'contests/contest_base.html' %}
+
+
+{% block contest_content %}
+<p>{{contest.abstract}}</p>
+{% comment %} コンテストが開催中，かつ，未参加の場合は参加ボタンを表示 {% endcomment %}
+{% if contest.is_live %}
+    {% if user not in contest.users.all %}
+        <form action="" method="POST">
+            {% csrf_token %}
+            <input type="submit" value="参加">
+        </form>
+    {% else %}
+        {% comment %} 参加済の場合 {% endcomment %}
+        <p>参加済です</p>
+    {% endif %}
+{% endif %}
+
+<h3>参加者一覧</h3>
+<ul>
+{% for user in contest.users.all %}
+    <li>{{user.username}}</li>
+{% endfor %}
+</ul>
+
+{% endblock contest_content %}

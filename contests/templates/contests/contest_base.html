@@ -1,0 +1,23 @@
+{% extends 'base.html' %}
+
+
+{% block page_title %}{{contest.short_name}}{% endblock page_title %}
+
+{% block content %}
+{% comment %} コンテスト専用のバーを表示 {% endcomment %}
+<div class="contest_bar">
+    <h1>{{contest.title}}</h1>
+    <a href="{% url 'contests:contest_detail' contest.short_name %}">トップ</a>
+    <a href="{% url 'contests:problems' contest.short_name %}">問題</a>
+    <a href="{% url 'contests:submissions_me' contest.short_name %}">自分の提出</a>
+    {% if not contest.is_live %}
+    <a href="{% url 'contests:submissions' contest.short_name %}">すべての提出</a>
+    {% endif %}
+    <a href="{% url 'contests:standings' contest.short_name %}">順位</a>
+</div>
+
+{% block contest_content %}
+{% comment %} オーバーライド {% endcomment %}
+{% endblock contest_content %}
+
+{% endblock content %}
