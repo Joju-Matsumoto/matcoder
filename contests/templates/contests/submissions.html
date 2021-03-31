@@ -5,12 +5,49 @@
 {% block contest_content %}
 
 <p>提出一覧</p>
-{% comment %} 開催中は自分の提出しか見れない {% endcomment %}
-{% comment %} コンテスト終了後は全ての提出が見られる {% endcomment %}
-<ul>
-{% for submission in submissions %}
-    <li><a href="{% url 'contests:submission_detail' contest.short_name submission.pk %}">{{submission}}</a></li>
-{% endfor %}
-</ul>
+{% if user not in contest.users.all %}
+    <p>参加してください</p>
+{% else %}
+    {% comment %} 開催中は自分の提出しか見れないようになっている {% endcomment %}
+    {% comment %} コンテスト終了後は全ての提出が見られる {% endcomment %}
+    <table class="table">
+        <thead>
+            <tr>
+                <th>提出日時</th>
+                <th>問題</th>
+                <th>ユーザ</th>
+                <th>得点</th>
+                <th>結果</th>
+                <th>詳細</th>
+            </tr>
+        </thead>
+        {% for submission in submissions %}
+            <tbody>
+                <tr>
+                    <td>{{ submission.get_date_str }}</td>
+                    <td>
+                        <a href="{% url 'contests:problem_detail' contest.short_name submission.problem.id %}">
+                            {{ submission.problem.title }}
+                        </a>
+                    </td>
+                    <td>{{ submission.user }}</td>
+                    <td>{{ submission.point }}</td>
+                    <td>
+                        {% if submission.accepted %}
+                            <span class="badge label-success">AC</span>
+                        {% else %}
+                            <span class="badge label-warning">WA</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        <a href="{% url 'contests:submission_detail' contest.short_name submission.id %}">
+                            詳細
+                        </a>
+                    </td>
+                </tr>
+            </tbody>
+        {% endfor %}
+    </table>
+{% endif %}
 
 {% endblock contest_content %}

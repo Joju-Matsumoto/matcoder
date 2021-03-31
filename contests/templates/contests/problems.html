@@ -5,17 +5,19 @@
 {% block contest_content %}
 
 <h2>問題一覧</h2>
-{% comment %} 参加済の場合，もしくは終了後のコンテストの場合は，問題一覧が見られる {% endcomment %}
-{% if not contest.is_live or user in contest.users %}
-<ul>
-{% for problem in problems %}
-    <li><a href="{% url 'contests:problem_detail' contest.short_name problem.pk %}">{{problem}}</a></li>
-{% endfor %}
-</ul>
+{% if contest.is_future_contest %}
+    {% comment %} 開催予定のコンテスト {% endcomment %}
+    <p>まだ開催していません</p>
+{% elif contest.is_live and user not in contest.users.all %}
+    {% comment %} 開催中だが参加していない {% endcomment %}
+    <p>参加してください</p>
 {% else %}
-{% comment %} 未参加の場合は問題は見れない {% endcomment %}
-<p>参加してください！</p>
+    {% comment %} それ以外の場合は見られる {% endcomment %}
+    <ul>
+    {% for problem in problems %}
+        <li><a href="{% url 'contests:problem_detail' contest.short_name problem.pk %}">{{problem}}</a></li>
+    {% endfor %}
+    </ul>
 {% endif %}
-
 
 {% endblock contest_content %}

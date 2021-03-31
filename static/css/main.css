@@ -1,12 +1,22 @@
 body {
-    background-color: green;
+    background-color: white;
 }
 
 main {
     margin: 60px 15px 0;
 }
 
-/* ロゴ */
+/* logo size */
 #img_logo {
     height: 30px;
+}
+
+/* AC badge */
+.label-success {
+    background-color: #5cb85c;
+}
+
+/* WA badge */
+.label-warning {
+    background-color: #f0ad4e;
 }

@@ -1,9 +1,40 @@
 {% extends 'contests/contest_base.html' %}
 
-
-
 {% block contest_content %}
-
-<p>順位表</p>
+{% if user not in contest.users.all %}
+    <p>参加してください</p>
+{% else %}
+    <h3>順位表</h3>
+    <table class="table">
+        <thead>
+            <tr>
+                <th>順位</th>
+                <th>ユーザ</th>
+                <th>得点</th>
+                {% for problem in problems %}
+                    <th>{{ problem.order }}</th>
+                {% endfor %}
+            </tr>
+        </thead>
+        <tbody>
+            {% for row in table_rows %}
+                <tr>
+                    <td>{{ row.order }}</td>
+                    <td>{{ row.user }}</td>
+                    <td>
+                        {{ row.score }} ({{ row.penalty }})<br>
+                        {{ row.time }}
+                    </td>
+                    {% for problem_score in row.problem_scores %}
+                        <td>
+                            {{ problem_score.score }} ({{ problem_score.penalty }})<br>
+                            {{ problem_score.get_time_str }}
+                        </td>
+                    {% endfor %}
+                </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+{% endif %}
 
 {% endblock contest_content %}

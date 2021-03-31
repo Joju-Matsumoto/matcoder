@@ -1,0 +1,38 @@
+{% load static %}
+
+{% comment %} すべてのページのヘッダー {% endcomment %}
+{% block header %}
+{% comment %} 必要ないページではオーバーライドする {% endcomment %}
+<header>
+<!-- Fixed navbar -->
+    <nav class="navbar navbar-expand-md fixed-top navbar-dark bg-dark">
+        <div class="container-fluid">
+            {% comment %} ブランドロゴリンク {% endcomment %}
+            <a class="navbar-brand" href="{% url 'contests:index' %}">
+                <img id="img_logo" src="{% static 'images/logo.png' %}" alt="MatCoder">
+            </a>
+            <div class="collapse navbar-collapse">
+                <ul class="navbar-nav me-auto mb-lg-0">
+                    <li class="nav-item active">
+                        <a class="nav-link" href="{% url 'contests:index' %}">コンテスト</a>
+                    </li>
+                    {% if user.is_authenticated %}
+                        {% comment %} ログイン済の場合はマイページ {% endcomment %}
+                        <li class="nav-item">
+                            <a class="nav-link" href="{% url 'users:index' %}">{{user.username}}</a>
+                        </li>
+                    {% else %}
+                        {% comment %} 未ログインの場合はログイン/新規登録 {% endcomment %}
+                        <li class="nav-item">
+                            <a class="nav-link" href="{% url 'users:signup' %}">新規登録</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="{% url 'users:login' %}">ログイン</a>
+                        </li>
+                    {% endif %}
+                </ul>
+            </div>
+        </div>
+    </nav>
+</header>
+{% endblock header %}
