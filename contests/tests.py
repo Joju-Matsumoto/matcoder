@@ -23,7 +23,7 @@ def create_contest(short_name: str, title="test", abstract="test abstract", \
 
 def get_delta_time(days=0, hours=0, minutes=0, seconds=0):
     """現在の時刻からdeltatime進んだ時刻を返す"""
-    return timezone.now() + datetime.timedelta(days=days, hours=hours, minutes=minutes, seconds=seconds)
+    return localtime(timezone.now()) + datetime.timedelta(days=days, hours=hours, minutes=minutes, seconds=seconds)
 
 # Create your tests here.
 class ContestTest(TestCase):
