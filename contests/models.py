@@ -1,6 +1,9 @@
 from django.db import models
 from django.conf import settings
 from django.utils import timezone
+from django.utils.timezone import localtime
+
+from . import utils
 
 class Contest(models.Model):
     """コンテストモデル"""
@@ -29,6 +32,10 @@ class Contest(models.Model):
         verbose_name="参加者",
         blank=True,
     )
+    penalty = models.IntegerField(
+        verbose_name="ペナルティ(分)",
+        default=5,
+    )
 
     def __str__(self):
         return self.title
@@ -44,9 +51,28 @@ class Contest(models.Model):
     def is_future_contest(self) -> bool:
         now = timezone.now()
         return now < self.start_date
+    
+    def get_start_time_str(self) -> str:
+        dt = localtime(self.start_date)
+        return "{}({}){}".format(
+            dt.strftime("%Y-%m-%d"),
+            utils.day_of_week_to_japanese[dt.strftime("%a")],
+            dt.strftime("%H:%M")
+        )
+    
+    def get_time_str(self) -> str:
+        dt = self.end_date - self.start_date
+        hour = int(dt.total_seconds()) // 3600
+        minute = int((dt.total_seconds()) % 3600) // 60
+        return f"{hour:02d}:{minute:02d}"
 
 class Problem(models.Model):
     """問題モデル"""
+    order = models.CharField(
+        verbose_name="問題番号(アルファベット)",
+        max_length=5,
+        default="A",
+    )
     title = models.CharField(
         verbose_name="タイトル",
         max_length=100,
@@ -63,6 +89,10 @@ class Problem(models.Model):
         Contest,
         verbose_name="コンテスト",
         on_delete=models.CASCADE,
+    )
+    point = models.IntegerField(
+        verbose_name="スコア",
+        default=0,
     )
 
     def __str__(self):
@@ -92,11 +122,18 @@ class Submission(models.Model):
         verbose_name="結果",
         default=False,
     )
+    point = models.IntegerField(
+        verbose_name="得点",
+        default=0,
+    )
 
     def __str__(self):
-        return "problem:{}, user:{}".format(self.problem, self.user)
+        return "problem:{}, user:{}".format(self.problem.title, self.user.username)
+    
+    def get_date_str(self):
+        return self.submission_date.strftime("%Y-%m-%d %H:%M:%S")
 
-class Score(models.Model):
+class ProblemScore(models.Model):
     problem = models.ForeignKey(
         Problem,
         verbose_name="問題",
@@ -115,10 +152,49 @@ class Score(models.Model):
         verbose_name="得点",
         default=0,
     )
-    first_accept_date = models.TimeField(
-        verbose_name="時間",
+    time_sec = models.IntegerField(
+        verbose_name="時間(s)",
+        default=0,
     )
 
     def __str__(self):
-        return "{}-{}".format(self.problem.title, self.user.username)
+        return "problem:{}, user:{}".format(self.problem.title, self.user.username)
+    
+    def get_time_str(self) -> str:
+        minutes = self.time_sec // 60
+        second = self.time_sec % 60
+        return f"{minutes:2d}:{second:2d}"
+
+class ContestScore(models.Model):
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        verbose_name="ユーザ",
+        on_delete=models.CASCADE,
+    )
+    contest = models.ForeignKey(
+        Contest,
+        verbose_name="コンテスト",
+        on_delete=models.CASCADE,
+    )
+    score = models.IntegerField(
+        verbose_name="得点",
+        default=0,
+    )
+    penalty = models.IntegerField(
+        verbose_name="ペナルティ",
+        default=0,
+    )
+    time_sec = models.IntegerField(
+        verbose_name="時間(s)",
+        default=0,
+    )
+
+    def __str__(self):
+        return "contest:{}, user:{}".format(self.contest.title, self.user.username)
+    
+    def get_time_str(self) -> str:
+        minutes = self.time_sec // 60
+        second = self.time_sec % 60
+        return f"{minutes:2d}:{second:2d}"
+    
     
