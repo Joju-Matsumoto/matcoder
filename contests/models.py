@@ -88,7 +88,37 @@ class Submission(models.Model):
         verbose_name="提出日時",
         default=timezone.now,
     )
+    accepted = models.BooleanField(
+        verbose_name="結果",
+        default=False,
+    )
 
     def __str__(self):
         return "problem:{}, user:{}".format(self.problem, self.user)
+
+class Score(models.Model):
+    problem = models.ForeignKey(
+        Problem,
+        verbose_name="問題",
+        on_delete=models.CASCADE,
+    )
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        verbose_name="参加者",
+        on_delete=models.CASCADE,
+    )
+    penalty = models.IntegerField(
+        verbose_name="ペナルティ",
+        default=0,
+    )
+    score = models.IntegerField(
+        verbose_name="得点",
+        default=0,
+    )
+    first_accept_date = models.TimeField(
+        verbose_name="時間",
+    )
+
+    def __str__(self):
+        return "{}-{}".format(self.problem.title, self.user.username)
     
