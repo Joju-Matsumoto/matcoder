@@ -14,8 +14,8 @@
     {% for error in form.non_field_errors %}
         <p>{{error}}</p>
     {% endfor %}
-    <button type="submit">ログイン</button>
+    {% include 'components/login_btn.html' %}
     または
-    <button type="button" onclick="location.href='{% url "users:signup" %}';">新規登録</button>
+    {% include 'components/signup_link.html' %}
 </form>
 {% endblock content %}

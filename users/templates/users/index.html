@@ -6,19 +6,14 @@
     <h2>ログイン済</h2>
     <p>こんにちは、{{user.username}}さん！</p>
     {% if user.is_superuser %}
-    <p>管理者アカウントです</p>
-    <a href="{% url 'admin:index' %}">アドミン</a>
+        <p>管理者アカウントです</p>
+        {% include 'components/admin_link.html' %}
     {% endif %}
-    <a href="{% url 'users:logout' %}">ログアウト</a>
+    {% include 'components/logout_link.html' %}
 {% else %}
     <h2>ゲストユーザー</h2>
     <p>あなたはゲストユーザーです</p>
-    <p>
-        こちらから<a href="{% url 'users:signup' %}">サインアップ</a><br>
-        もしくは<a href="{% url 'users:login' %}">ログイン</a>
-    </p>
+    {% include 'components/signup_link.html' %}
+    {% include 'components/login_link.html' %}
 {% endif %}
-a<br>a<br>a<br>a<br>a<br>a<br>a<br>a<br>a<br>a<br>a<br>a<br>a<br>a<br>a<br>
-a<br>a<br>a<br>a<br>a<br>a<br>a<br>a<br>a<br>a<br>a<br>a<br>a<br>a<br>a<br>
-a<br>a<br>a<br>a<br>a<br>a<br>a<br>a<br>a<br>a<br>a<br>a<br>a<br>a<br>a<br>
 {% endblock content %}
