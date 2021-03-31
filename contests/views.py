@@ -6,6 +6,7 @@ from django.views import View
 
 from . import models
 from . import forms
+from . import utils
 
 def index_view(request):
     template_name = "contests/index.html"
@@ -61,8 +62,14 @@ class ProblemDetailView(View):
         problem = models.Problem.objects.get(pk=problem_id)
         form = forms.SubmissionForm(request.POST)
         if form.is_valid(): # 検証ずみ
-            # フォームからモデルのインスタンスを取得し，情報を加えてからDBに保存
+            # フォームからモデルのインスタンスを取得し，正誤判定し，情報を加えてからDBに保存
             submission = form.save(commit=False)    # DBに保存せずにインスタンス化
+            if utils.check_answer(submission.answer, problem.answer):   # 正答
+                submission.accepted = True
+                # contest_score を更新
+            else:   # 誤答
+                submission.accepted = False
+
             submission.user = request.user
             submission.problem = problem
             submission.save()   # 保存
