@@ -1,21 +1,27 @@
 import datetime
+from threading import Thread
 
 from django.shortcuts import render, redirect
 # from django.views.generic import TemplateView
 # Create your views here.
 from django.utils import timezone
 from django.views import View
+from django.contrib import messages
+
+from users.models import User
 
 from . import models
 from . import forms
 from . import utils
+from . import docker
+from . import check_submission
 
 class IndexView(View):
     def get(self, request, *args, **kwargs):
         now = timezone.now()
         all_contests = models.Contest.objects.all()
-        past_contests = all_contests.filter(end_date__lt=now)
-        future_contests = all_contests.filter(start_date__gt=now)
+        past_contests = all_contests.filter(end_date__lt=now).order_by("-start_date")
+        future_contests = all_contests.filter(start_date__gt=now).order_by("start_date")
         live_contests = all_contests.filter(start_date__lte=now).filter(end_date__gt=now)
         context = {
             "contests_list": [
@@ -28,39 +34,153 @@ class IndexView(View):
 
 index_view = IndexView.as_view()
 
+
+def enter_contest(contest: models.Contest, user: User):
+    """コンテスト参加時の処理をすべて行う．\
+    元から存在する場合は初期化する．(得点再計算を考慮)
+    """
+    
+    # コンテストに参加
+    if user not in contest.users.all():
+        contest.users.add(user)
+        contest.save()
+    
+    # スコアの初期化
+    # ContestScoreの初期化
+    try:    # 存在する場合
+        contest_score = models.ContestScore.objects.get(contest=contest, user=user)
+    except: # 存在しない場合は作成
+        contest_score = models.ContestScore.objects.create(
+            contest=contest,
+            user=user,
+        )
+    contest_score.time_sec = 0
+    contest_score.penalty = 0
+    contest_score.score = 0
+    contest_score.save()
+    for problem in contest.problem_set.all():
+        # ProblemScoreの初期化
+        try:    # 存在する場合
+            problem_score = models.ProblemScore.objects.get(user=user, problem=problem)
+        except: # 存在しない場合は作成
+            problem_score = models.ProblemScore.objects.create(
+                user=user,
+                problem=problem,
+            )
+        problem_score.time_sec = 0
+        problem_score.penalty = 0
+        problem_score.score = 0
+        problem_score.save()
+
 class ContestDetailView(View):
     def get(self, request, short_name, *args, **kwargs):
         contest = models.Contest.objects.get(short_name=short_name)
         context = {
             "is_live": contest.is_live(),
             "contest": contest,
+            "problems": contest.problem_set.order_by("order"),
+            # "start_date_str": contest.get_start_time_str(),
+            # "end_date_str": contest.get_end_time_str(),
         }
         return render(request, "contests/contest_detail.html", context)
     
     def post(self, request, short_name, *args, **kwargs):
         contest = models.Contest.objects.get(short_name=short_name)
-        if request.user.is_authenticated:
-            contest.users.add(request.user)
-            contest.save()
-            contest_score = models.ContestScore.objects.create(
-                contest=contest,
-                user=request.user,
-            )
-            contest_score.save()
-        return redirect("contests:contest_detail", short_name)
+        if request.user.is_authenticated:   # ログイン済ユーザー
+            # コンテスト参加処理
+            enter_contest(contest, request.user)
+            return redirect("contests:contest_detail", short_name)
+        else:
+            return redirect("users:index")
 
 contest_detail_view = ContestDetailView.as_view()
+
 
 class ProblemsView(View):
     def get(self, request, short_name, *args, **kwargs):
         contest = models.Contest.objects.get(short_name=short_name)
         context = {
             "contest": contest,
-            "problems": contest.problem_set.all(),
+            "problems": contest.problem_set.order_by("order"),
         }
         return render(request, "contests/problems.html", context)
 
 problems_view = ProblemsView.as_view()
+
+
+def update_submission(submission: models.Submission, problem: models.Problem, user: User):
+    """Submissionの正誤判定と保存
+    """
+    # user, problemの関連づけ．check_submission内でproblemを取得するため．
+    submission.user = user
+    submission.problem = problem
+    submission.accepted = True  # ACであると仮定しておく．
+    submission.total_test_case = problem.total_test_case()    # テストケースの数
+    # いったん保存する．test_resultでforeignkeyとして使用するため．
+    submission.save()
+    # acceptedの更新は冗長な処理になってしまっている
+    if check_submission.check_answer(submission):   # 正答
+        submission.status = "AC"
+        submission.accepted = True
+        submission.point = problem.point
+    else:   # 誤答
+        submission.accepted = False
+    # 保存
+    submission.save()
+
+def update_contest_score(problem_score: models.ProblemScore, contest: models.Contest, user: User):
+    """ContestScoreの更新
+    """
+    # ContestScoreの更新
+    try:
+        contest_score = models.ContestScore.objects.get(contest=contest, user=user)
+    except: # 念のため
+        contest_score = models.ContestScore.objects.create(
+            contest=contest,
+            user=user,
+        )
+    contest_score.penalty += problem_score.penalty      # ペナルティ加算
+    contest_score.score += problem_score.score          # スコア加算
+    # 時間(s) = 最終の初ACの時間(s) + ペナルティ数 * ペナルティ * 60
+    contest_score.time_sec = problem_score.time_sec + contest_score.penalty * contest.penalty * 60
+    contest_score.save()    # 保存
+
+def update_problem_score(submission: models.Submission, contest: models.Contest, problem: models.Problem, user: User):
+    """スコア(ContestScore, ProblemScore)の更新
+    """
+
+    # ProblemScoreの更新
+    try:
+        problem_score = models.ProblemScore.objects.get(user=user, problem=problem)
+    except: # 念のため
+        problem_score = models.ProblemScore.objects.create(
+            user=user,
+            problem=problem,
+        )
+    
+    # まだACしていない場合，スコア変動の可能性がある
+    if problem_score.time_sec == 0:
+        if submission.accepted: # AC：時間(s)と得点を更新
+            problem_score.time_sec = (submission.submission_date - contest.start_date).total_seconds() # 時間更新
+            problem_score.score = submission.point  # 得点を更新
+            
+            # ContestScoreを更新
+            update_contest_score(problem_score, contest, user)
+        else:   # WA：ペナルティ加算
+            problem_score.penalty += 1
+    
+    problem_score.save()    # 保存
+
+def submit(submission: models.Submission, contest: models.Contest, problem: models.Problem, user: User, force_to_rescore: bool=False):
+    """submissionを受け取って，正誤判定を行い，関連するデータベースを更新する
+    """
+    # Submissionの更新
+    update_submission(submission, problem, user)
+
+    # スコアの更新
+    if contest.is_live() or force_to_rescore:   # 開催中 or 強制再計算の場合のみ得点計算
+        # ProblemScoreの更新．必要に応じて，ContestScoreの更新も行われる
+        update_problem_score(submission, contest, problem, user)
 
 class ProblemDetailView(View):
     def get(self, request, short_name, problem_id, *args, **kwargs):
@@ -78,49 +198,13 @@ class ProblemDetailView(View):
         problem = models.Problem.objects.get(pk=problem_id)
         form = forms.SubmissionForm(request.POST)
         if form.is_valid(): # 検証ずみ
-            ############################################################
-            # フォームからSubmissionを生成，正誤判定し，情報を加えてからDBに保存
-            ############################################################
             submission = form.save(commit=False)    # DBに保存せずにインスタンス化
-            if utils.check_answer(submission.answer, problem.answer):   # 正答
-                submission.accepted = True
-                submission.point = problem.point
-            else:   # 誤答
-                submission.accepted = False
-            submission.user = request.user
-            submission.problem = problem
-            submission.save()   # 保存
-            ################
-            #  スコアへの反映
-            ################
-            if contest.is_live(): # コンテスト中はスコアに反映する
-                ######################
-                # ProblemScoreへの反映
-                ######################
-                try:    # 存在チェック
-                    problem_score = models.ProblemScore.objects.get(user=request.user, problem=problem)
-                except: # 存在しなければ新たに作成する
-                    problem_score = models.ProblemScore.objects.create(
-                        user=request.user,
-                        problem=problem,
-                    )
-                if problem_score.time_sec == 0: # まだACしていない場合，スコア変動の可能性がある
-                    if submission.accepted: # AC：得点が決まる
-                        # 時間(s)と得点を決定
-                        problem_score.time_sec = (submission.submission_date - contest.start_date).total_seconds()
-                        problem_score.score = submission.point  # 得点を更新
-                        ######################
-                        # ContestScoreへの反映
-                        ######################
-                        contest_score = models.ContestScore.objects.get(contest=contest, user=request.user)
-                        contest_score.penalty += problem_score.penalty      # ペナルティ加算
-                        contest_score.score += problem_score.score          # スコア加算
-                        # 時間(s) = 最終の初ACの時間(s) + ペナルティ数 * ペナルティ * 60
-                        contest_score.time_sec = problem_score.time_sec + contest_score.penalty * contest.penalty * 60
-                        contest_score.save()    # 保存
-                    else:   # WA：ペナルティ加算
-                        problem_score.penalty += 1
-                problem_score.save()    # 保存
+            # 提出処理
+            # submit(submission, contest, problem, request.user, force_to_rescore=False)
+            # スレッドに任せる
+            thread = Thread(target=submit, args=(submission, contest, problem, request.user, False,))
+            thread.start()
+            # リダイレクト
             return redirect("contests:submissions", short_name)
         else:   # 検証エラー
             contest = models.Contest.objects.get(short_name=short_name)
@@ -132,6 +216,7 @@ class ProblemDetailView(View):
             return render(request, "contests/problem_detail.html", context)
 
 problem_detail_view = ProblemDetailView.as_view()
+
 
 class SubmissionsView(View):
     def get(self, request, short_name, *args, **kwargs):
@@ -149,6 +234,7 @@ class SubmissionsView(View):
 
 submissions_view = SubmissionsView.as_view()
 
+
 class SubmissionsMeView(View):
     def get(self, request, short_name, *args, **kwargs):
         if not request.user.is_authenticated:   # 要ログイン
@@ -163,6 +249,7 @@ class SubmissionsMeView(View):
 
 submissions_me_view = SubmissionsMeView.as_view()
 
+
 class SubmissionDetailView(View):
     def get(self, request, short_name, submission_id, *args, **kwargs):
         contest = models.Contest.objects.get(short_name=short_name)
@@ -172,10 +259,12 @@ class SubmissionDetailView(View):
             "problem": problem,
             "contest": contest,
             "submission": submission,
+            "test_results": models.TestResult.objects.filter(submission=submission),
         }
         return render(request, "contests/submission_detail.html", context)
 
 submission_detail_view = SubmissionDetailView.as_view()
+
 
 class StandingsView(View):
     def get(self, request, short_name, *args, **kwargs):
@@ -201,3 +290,41 @@ class StandingsView(View):
         return render(request, "contests/standings.html", context)
 
 standings_view = StandingsView.as_view()
+
+
+class CodeTestView(View):
+    def get(self, request):
+        form = forms.CodeSubmissionForm(request.session.get("form_data"))
+        result_status = request.session.get("result_status")
+        result_output = request.session.get("result_output")
+        result_error = request.session.get("result_error")
+        context = {
+            "form": form,
+            "result_status": result_status,
+            "result_output": result_output,
+            "result_error": result_error,
+        }
+        return render(request, "contests/code_test.html", context)
+    
+    def post(self, request):
+        form = forms.CodeSubmissionForm(request.POST)
+        if not request.user.is_authenticated:
+            messages.warning(request, "ログインしてください！")
+            return redirect("contests:code_test")
+        if form.is_valid():
+            request.session["form_data"] = request.POST
+            code = form.cleaned_data["code"]
+            test_input = form.cleaned_data["test_input"]
+            test_output = form.cleaned_data["test_output"]
+            status, output, error = docker.exec_code_python(code, request.user.username, test_input, test_output)
+            request.session["result_status"] = status
+            request.session["result_output"] = output
+            request.session["result_error"] = error
+            return redirect("contests:code_test")
+        else:
+            context = {
+                "form": form,
+            }
+            return render(request, "contests/code_test.html", context)
+
+code_test_view = CodeTestView.as_view()
