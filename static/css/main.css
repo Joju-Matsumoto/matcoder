@@ -11,6 +11,11 @@ main {
     height: 30px;
 }
 
+/* WAIT badge */
+.label-waiting-judge {
+    background-color: #6d6d6d;
+}
+
 /* AC badge */
 .label-success {
     background-color: #5cb85c;
@@ -19,4 +24,39 @@ main {
 /* WA badge */
 .label-warning {
     background-color: #f0ad4e;
+}
+
+/* all a color */
+a {
+    color: #337ab7;
+    text-decoration: none;
+}
+
+/* 得点表 */
+.span-total-score {
+    color: #0000FF;
+}
+
+.span-score {
+    color: #00AA3E;
+}
+
+.span-time {
+    color: #888;
+}
+
+.span-penalty {
+    color: #FF0000;
+}
+
+thead > tr {
+    font-weight: bold;
+}
+
+h2, h3 {
+    font-weight: bold;
+}
+
+.code {
+    background-color: #eeeeee;
 }
