@@ -2,30 +2,41 @@
 
 {% block content %}
 
-
-{% for contests_label, contests in contests_list %}
-    <div class="container">
-        <h2>コンテスト一覧</h2>
-        <h3>{{ contests_label }}</h3>
-        <table class="table table-striped table-hover">
-            <thead>
-                <tr>
-                    <th>開始時刻</th>
-                    <th>コンテスト名</th>
-                    <th>時間</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for contest in contests %}
+<div class="row p-3">
+    <h1 class="text-center">コンテスト一覧</h1>
+    <hr>
+    {% for contests_label, contests in contests_list %}
+        <div class="row">
+            <h4>
+                {% if "開催中" in contests_label %}
+                    {% include 'icons/broadcast.svg' %}
+                {% elif "開催予定" in contests_label %}
+                    {% include 'icons/calendar-event-fill.svg' %}
+                {% else %}
+                    {% include 'icons/clock-history.svg' %}
+                {% endif %}
+                {{ contests_label }}
+            </h4>
+            <table class="table table-striped table-bordered table-hover small text-center">
+                <thead>
                     <tr>
-                        <td>{{ contest.get_start_time_str }}</td>
-                        <td><a href="{% url 'contests:contest_detail' contest.short_name %}">{{ contest.title }}</a></td>
-                        <td>{{ contest.get_time_str }}</td>
+                        <th width="20%">開始時刻</th>
+                        <th>コンテスト名</th>
+                        <th width="12%">時間</th>
                     </tr>
-                {% endfor %}
-            </tbody>
-        </table>
-    </div>
-{% endfor %}
+                </thead>
+                <tbody>
+                    {% for contest in contests %}
+                        <tr>
+                            <td>{{ contest.get_start_time_str }}</td>
+                            <td class="text-start"><a href="{% url 'contests:contest_detail' contest.short_name %}">{{ contest.title }}</a></td>
+                            <td>{{ contest.get_time_str }}</td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    {% endfor %}
+</div>
 
 {% endblock content %}

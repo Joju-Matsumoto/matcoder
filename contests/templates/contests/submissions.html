@@ -1,16 +1,18 @@
 {% extends 'contests/contest_base.html' %}
 
-
+{% block contest_tab_submissions %}active{% endblock %}
 
 {% block contest_content %}
 
-<p>提出一覧</p>
-{% if user not in contest.users.all %}
+<div class="col-sm-12">
+    <h3>提出一覧</h3>
+</div>
+{% if user not in contest.users.all and not contest.is_past_contest %}
     <p>参加してください</p>
 {% else %}
     {% comment %} 開催中は自分の提出しか見れないようになっている {% endcomment %}
     {% comment %} コンテスト終了後は全ての提出が見られる {% endcomment %}
-    <table class="table">
+    <table class="table table-bordered">
         <thead>
             <tr>
                 <th>提出日時</th>
@@ -33,10 +35,14 @@
                     <td>{{ submission.user }}</td>
                     <td>{{ submission.point }}</td>
                     <td>
-                        {% if submission.accepted %}
-                            <span class="badge label-success">AC</span>
-                        {% else %}
-                            <span class="badge label-warning">WA</span>
+                        {% if submission.judged_test_case < submission.total_test_case %} {% comment %} ジャッジ中 {% endcomment %}
+                            <span class="badge label-waiting-judge {% if not submission.accepted %}label-warning{% endif %}">
+                                {{submission.judged_test_case}}/{{submission.total_test_case}}
+                            </span>
+                        {% else %} {% comment %} 結果が確定 {% endcomment %}
+                            <span class="badge label-{% if submission.accepted %}success{% else %}warning{% endif %}">
+                                {{ submission.status }}
+                            </span>
                         {% endif %}
                     </td>
                     <td>

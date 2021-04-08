@@ -1,23 +1,40 @@
 {% extends 'contests/contest_base.html' %}
 
-
+{% block contest_tab_problems %}active{% endblock %}
 
 {% block contest_content %}
-
-<h2>問題一覧</h2>
+<div class="col-sm-12">
+    <h3>問題</h3>
+    <hr>
+</div>
 {% if contest.is_future_contest %}
     {% comment %} 開催予定のコンテスト {% endcomment %}
-    <p>まだ開催していません</p>
+    <div class="col-sm-12">
+        開催していません
+    </div>
 {% elif contest.is_live and user not in contest.users.all %}
     {% comment %} 開催中だが参加していない {% endcomment %}
-    <p>参加してください</p>
+    <div class="col-sm-12">
+        開催していません
+    </div>
 {% else %}
     {% comment %} それ以外の場合は見られる {% endcomment %}
-    <ul>
-    {% for problem in problems %}
-        <li><a href="{% url 'contests:problem_detail' contest.short_name problem.pk %}">{{problem}}</a></li>
-    {% endfor %}
-    </ul>
+    <table class="table table-bordered table-striped">
+        <thead>
+            <tr>
+                <th width="5%"></th>
+                <th>問題名</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for problem in problems %}
+                <tr>
+                    <td class="text-center"><a href="{% url 'contests:problem_detail' contest.short_name problem.pk %}">{{problem.order}}</a></td>
+                    <td><a href="{% url 'contests:problem_detail' contest.short_name problem.pk %}">{{problem.title}}</a></td>
+                </tr>
+            {% endfor %}
+        </tbody>
+    </table>
 {% endif %}
 
 {% endblock contest_content %}

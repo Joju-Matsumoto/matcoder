@@ -1,19 +1,57 @@
 {% extends 'base.html' %}
 
 {% block content %}
-<div class="container"></div>
-{% if user.is_authenticated %}
-    <h2>ログイン済</h2>
-    <p>こんにちは、{{user.username}}さん！</p>
-    {% if user.is_superuser %}
-        <p>管理者アカウントです</p>
-        {% include 'components/admin_link.html' %}
+<div class="row p-3">
+    {% if user.is_authenticated %}
+        <div class="col-sm-12 text-center">
+            <h2>
+                {{user.username}}
+                <small>さんのマイページ</small>
+            </h2>
+        </div>
+        <hr>
+        <div class="col-sm-12">
+            <h3>コンテスト成績</h3>
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>日時</th>
+                        <th>コンテスト名</th>
+                        {% comment %} 順位も表示したい {% endcomment %}
+                        <th>順位</th>   
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for contest_score in contest_scores %}
+                        {% if contest_score.contest.is_past_contest %}
+                            <tr>
+                                <td>{{contest_score.contest.get_start_time_str}}</td>
+                                <td>{{contest_score.contest.title}}</td>
+                            </tr>
+                        {% endif %}
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        <div class="col-sm-12 mt-4">
+            <a class="btn btn-outline-secondary" href="{% url 'users:logout' %}">ログアウト</a>
+        </div>
+        {% if user.is_superuser %}
+            <div class="col-sm-12 mt-4">
+                管理者アカウントです
+                <a class="btn btn-primary" href="{% url 'admin:index' %}">アドミン</a>
+            </div>
+        {% endif %}
+    {% else %}
+        <div class="col-sm-12 text-center">
+            <h2>ゲストユーザー</h2>
+        </div>
+        <hr>
+        <div class="col-sm-12 text-center">
+            <a class="btn btn-outline-primary" href="{% url 'users:login' %}">ログイン</a>
+            もしくは
+            <a class="btn btn-outline-primary" href="{% url 'users:signup' %}">新規登録</a>
+        </div>
     {% endif %}
-    {% include 'components/logout_link.html' %}
-{% else %}
-    <h2>ゲストユーザー</h2>
-    <p>あなたはゲストユーザーです</p>
-    {% include 'components/signup_link.html' %}
-    {% include 'components/login_link.html' %}
-{% endif %}
+</div>
 {% endblock content %}

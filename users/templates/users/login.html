@@ -1,21 +1,36 @@
 {% extends 'base.html' %}
 
-
 {% block content %}
 {% comment %} ログインフォーム {% endcomment %}
-<form action="" method="POST">
+<div class="row">
+    <h3 class="mt-4 mb-4">ログイン</h3>
+</div>
+
+<form action="" method="POST" class="form">
     {% csrf_token %}
     {% for field in form %}
-        <p>
-            {{field.label_tag}}
-            {{field}}
-        </p>
+        <div class="row">
+            <div class="col-auto">
+                {{field.label_tag}}
+            </div>
+            <div class="col-auto">
+                {{field}}
+            </div>
+        </div>
     {% endfor %}
     {% for error in form.non_field_errors %}
-        <p>{{error}}</p>
+        {{error}}
     {% endfor %}
-    {% include 'components/login_btn.html' %}
-    または
-    {% include 'components/signup_link.html' %}
+    <div class="row p-3">
+        <div class="col-auto">
+            <button type="submit" class="btn btn-primary">ログイン</button>
+        </div>
+        <div class="col-auto mt-2">
+            もしくは
+        </div>
+        <div class="col-auto">
+            <a type="button" class="btn btn-outline-secondary" href="{% url 'users:signup' %}">新規登録</a>
+        </div>
+    </div>
 </form>
 {% endblock content %}

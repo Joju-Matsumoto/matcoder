@@ -1,40 +1,48 @@
 {% extends 'contests/contest_base.html' %}
 
+{% block contest_tab_standings %}active{% endblock %}
+
 {% block contest_content %}
-{% if user not in contest.users.all %}
-    <p>参加してください</p>
-{% else %}
+<div class="col-sm-12">
     <h3>順位表</h3>
-    <table class="table">
+    <table class="table table-bordered table-striped small text-center">
         <thead>
             <tr>
-                <th>順位</th>
-                <th>ユーザ</th>
-                <th>得点</th>
+                <th width="7%">順位</th>
+                <th width="15%">ユーザ</th>
+                <th width="8%">得点</th>
                 {% for problem in problems %}
-                    <th>{{ problem.order }}</th>
+                    <th width="8%">{{ problem.order }}</th>
                 {% endfor %}
             </tr>
         </thead>
         <tbody>
             {% for row in table_rows %}
-                <tr>
+                <tr {% if row.user == user %}class="table-primary"{% endif %}>
                     <td>{{ row.order }}</td>
-                    <td>{{ row.user }}</td>
+                    <td class="text-start fw-bold">{{ row.user }}</td>
                     <td>
-                        {{ row.score }} ({{ row.penalty }})<br>
-                        {{ row.time }}
+                        <span class="span-total-score fw-bold">{{ row.score }}</span>
+                        {% if row.penalty != 0 %}
+                            <span class="span-penalty">({{ row.penalty }})</span>
+                        {% endif %}
+                        <br>
+                        <span class="span-time">{{ row.time }}</span>
                     </td>
                     {% for problem_score in row.problem_scores %}
                         <td>
-                            {{ problem_score.score }} ({{ problem_score.penalty }})<br>
-                            {{ problem_score.get_time_str }}
+                            <span class="span-score fw-bold">{{ problem_score.score }}</span>
+                            {% if problem_score.penalty != 0 %}
+                                <span class="span-penalty">({{ problem_score.penalty }})</span>
+                            {% endif %}
+                            <br>
+                            <span class="span-time">{{ problem_score.get_time_str }}</span>
                         </td>
                     {% endfor %}
                 </tr>
             {% endfor %}
         </tbody>
     </table>
-{% endif %}
+</div>
 
 {% endblock contest_content %}

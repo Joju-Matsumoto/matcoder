@@ -1,0 +1,55 @@
+{% extends 'base.html' %}
+
+{% block content %}
+
+<div class="row p-3 text-center">
+    <h1 class="text-center">コードテスト</h1>
+    <form action="" method="POST">
+        {% csrf_token %}
+        {% for field in form %}
+            <div class="col mr-4">
+                {{field.help_text}}
+            </div>
+            <code class="col mr-4">
+                {{field}}
+            </code>
+        {% endfor %}
+        <div class="col-auto p-3">
+            <button class="btn btn-primary">提出</button>
+        </div>
+    </form>
+</div>
+<hr>
+<div class="row m-4 text-center">
+    <div class="col-2 mt-3">
+        結果
+    </div>
+    <hr>
+    <div class="col-10 mt-3">
+        {% if result_status %}
+            <span class="badge {% if result_status == "AC" %}label-success{% else %}label-warning{% endif %}">{{result_status}}</span>
+        {% endif %}
+    </div>
+    <hr>
+    <div class="col-2 mt-3">
+        出力結果
+    </div>
+    <hr>
+<code class="col-10 mt-3">
+{% if result_output %}
+{{result_output}}
+{% endif %}
+</code>
+    <hr>
+    <div class="col-2 mt-3">
+        エラー
+    </div>
+    <hr>
+<pre class="col-10 mt-3">
+{% if result_error %}
+{{result_error}}
+{% endif %}
+</pre>
+</div>
+
+{% endblock content %}

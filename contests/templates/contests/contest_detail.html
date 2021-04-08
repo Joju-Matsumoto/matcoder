@@ -1,28 +1,64 @@
 {% extends 'contests/contest_base.html' %}
 
+{% block contest_tab_detail %}active{% endblock %}
+
 {% block contest_content %}
-
-<div class="row">
-    {{contest.abstract}}
+<div class="col-sm-12 mb-4 pl-4 pr-4 pb-4 text-center bg-light">
+    {% comment %} コンテストタイトル {% endcomment %}
+    <h1 class="pt-4">{{contest.title}}</h1>
+    {% comment %} 参加ボタン {% endcomment %}
+    <div class="pt-1 pb-4">
+        {% if not contest.is_past_contest %}
+            {% if user not in contest.users.all %}
+                {% comment %} コンテストが開催中or予定されて，userが参加していない場合 {% endcomment %}
+                <form action="" method="POST" class="p-3">
+                    {% csrf_token %}
+                    <button type="submit" class="btn btn-primary btn-lg">参加する</button>
+                </form>
+            {% else %}
+                {% comment %} 参加済 {% endcomment %}
+                <button type="button" class="btn btn-secondary btn-lg" disabled>参加済</button>
+            {% endif %}
+        {% endif %}
+    </div>
 </div>
-{% comment %} コンテストが開催中，かつ，未参加の場合は参加ボタンを表示 {% endcomment %}
-{% if not contest.is_past_contest %}
-    {% if user not in contest.users.all %}
-        <form action="" method="POST">
-            {% csrf_token %}
-            <button type="submit" class="btn btn-primary btn-lg">参加する</button>
-        </form>
-    {% else %}
-        {% comment %} 参加済の場合 {% endcomment %}
-        <p>参加済です</p>
-    {% endif %}
-{% endif %}
 
-<h3>参加者一覧</h3>
-<ul>
-{% for user in contest.users.all %}
-    <li>{{user.username}}</li>
-{% endfor %}
-</ul>
+<div class="col-sm-12 mb-4">
+    <h3>コンテスト情報</h3>
+    <ul>
+        <li>コンテスト時間: {{ contest.get_time_hour }}分</li>
+        <li>ペナルティ: {{ contest.penalty }}分</li>
+    </ul>
+</div>
+
+<div class="col-sm-12">
+    <h3>配点</h3>
+    <table class="table table-bordered table-striped text-center">
+        <thead>
+            <tr class="">
+                <th>問題</th>
+                <th>点数</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for problem in problems %}
+                <tr>
+                    <td>{{problem.order}}</td>
+                    <td>{{problem.point}}</td>
+                </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+<div class="col-sm-12">
+    <h3>ルール</h3>
+    <ol>
+        <li>コンテスト中に問題に正解すると得点を獲得できます。</li>
+        <li>順位は総合得点で決定します。</li>
+        <li>同点の場合は提出時間の早い人が上の順位になります。</li>
+        <li>誤答を提出するたびにペナルティが加算されます。このコンテストのペナルティは{{contest.penalty}}分です。</li>
+    </ol>
+</div>
 
 {% endblock contest_content %}

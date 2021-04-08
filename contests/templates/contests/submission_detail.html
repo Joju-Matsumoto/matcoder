@@ -1,16 +1,39 @@
 {% extends 'contests/contest_base.html' %}
 
+{% block contest_tab_submissions %}active{% endblock %}
+
 {% block contest_content %}
-
-<h2>提出 #{{submission.pk}}</h2>
-<pre>
-    <code class="bg-secondary">
-        {{submission.answer}}
-    </code>
+<div class="col-sm-12">
+    <h3>提出 #{{ submission.pk }}</h3>
+</div>
+<div class="col-sm-12">
+<pre class="code">
+<code>
+{{submission.answer}}
+</code>
 </pre>
-<p>正解：{{problem.answer}}</p>
-<p>結果：{{submission.accepted}}</p>
-
-<p>問題：<a href="{% url 'contests:problem_detail' contest.short_name problem.pk %}">{{problem}}</a></p>
+</div>
+<div class="col-sm-12">
+    <table class="table table-bordered table-striped">
+        <thead>
+            <tr>
+                <th>ケース名</th>
+                <th>結果</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for test_result in test_results %}
+                <tr>
+                    <td>{{ test_result.test_case.title }}</td>
+                    <td>
+                        <span class="badge label-{% if test_result.status == "AC" %}success{% else %}warning{% endif %}">
+                            {{ test_result.status }}
+                        </span>
+                    </td>
+                </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
 
 {% endblock contest_content %}

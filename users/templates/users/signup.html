@@ -1,21 +1,43 @@
 {% extends 'base.html' %}
 
 {% block content %}
-<h2>サインアップ</h2>
-<form method="POST">
+<div class="row">
+    <h3 class="mt-4 mb-4">サインアップ</h3>
+</div>
+<form method="POST" class="form">
     {% csrf_token %}
     {% for field in form %}
-        <p>
-            {{field.label_tag}}
-            {{field}}
-            {% if field.help_text %}
-                <small style="color: grey">{{field.help_text}}</small>
-            {% endif %}
-            {% for error in field.errors %}
-                <p style="color: red">{{error}}</p>
-            {% endfor %}
-        </p>
+        <div class="row">
+            <div class="col-auto form-label mt-3">
+                {{field.label_tag}}
+            </div>
+            <div class="col-auto">
+                {{field}}
+            </div>
+            <div class="col-auto mb-4">
+                {% if field.help_text %}
+                    <small style="color: grey">{{field.help_text}}</small>
+                {% endif %}
+            </div>
+        </div>
+        {% for error in field.errors %}
+            <div class="row">
+                <div class="col-12 mb-3">
+                    <span style="color: red;">{{error}}</span>
+                </div>
+            </div>
+        {% endfor %}
     {% endfor %}
-    {% include 'components/signup_btn.html' %}
+    <div class="row p-3">
+        <div class="col-auto">
+            <button type="submit" class="btn btn-primary">新規登録</button>
+        </div>
+        <div class="col-auto mt-2">
+            もしくは
+        </div>
+        <div class="col-auto">
+            <a type="button" class="btn btn-outline-secondary" href="{% url 'users:login' %}">ログイン</a>
+        </div>
+    </div>
 </form>
 {% endblock content %}
