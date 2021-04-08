@@ -53,18 +53,30 @@ class Contest(models.Model):
         return now < self.start_date
     
     def get_start_time_str(self) -> str:
-        dt = localtime(self.start_date)
-        return "{}({}){}".format(
-            dt.strftime("%Y-%m-%d"),
-            utils.day_of_week_to_japanese[dt.strftime("%a")],
-            dt.strftime("%H:%M")
-        )
+        """ コンテスト開始時刻を「21-04-04 (月) 21:00」の形式の文字列で返す
+        """
+        return utils.datetime_str(self.start_date)
+    
+    def get_end_time_str(self) -> str:
+        """ コンテスト終了時刻を「21-04-04 (月) 22:30」の形式の文字列で返す
+        """
+        return utils.datetime_str(self.end_date)
     
     def get_time_str(self) -> str:
+        """ 00:00の形式でコンテスト時間を返す
+        """
         dt = self.end_date - self.start_date
         hour = int(dt.total_seconds()) // 3600
         minute = int((dt.total_seconds()) % 3600) // 60
         return f"{hour:02d}:{minute:02d}"
+    
+    def get_time_hour(self) -> int:
+        """ 分単位でコンテスト時間を返す
+        """
+        dt = self.end_date - self.start_date
+        minute = int(dt.total_seconds()) // 60
+        return minute
+
 
 class Problem(models.Model):
     """問題モデル"""
@@ -98,6 +110,10 @@ class Problem(models.Model):
     def __str__(self):
         return self.title
     
+    def total_test_case(self) -> int:
+        return len(TestCase.objects.filter(problem=self))
+
+
 class Submission(models.Model):
     answer = models.TextField(
         verbose_name="回答",
@@ -118,6 +134,11 @@ class Submission(models.Model):
         verbose_name="提出日時",
         default=timezone.now,
     )
+    status = models.CharField(
+        verbose_name="状態",
+        max_length=10,
+        default="WAIT",
+    )
     accepted = models.BooleanField(
         verbose_name="結果",
         default=False,
@@ -126,12 +147,22 @@ class Submission(models.Model):
         verbose_name="得点",
         default=0,
     )
+    total_test_case = models.IntegerField(
+        verbose_name="テストケースの数",
+        default=0,
+    )
+    judged_test_case = models.IntegerField(
+        verbose_name="ジャッジ済テストケースの数",
+        default=0,
+    )
 
     def __str__(self):
         return "problem:{}, user:{}".format(self.problem.title, self.user.username)
     
     def get_date_str(self):
-        return self.submission_date.strftime("%Y-%m-%d %H:%M:%S")
+        dt = localtime(self.submission_date)
+        return dt.strftime("%Y-%m-%d %H:%M:%S")
+
 
 class ProblemScore(models.Model):
     problem = models.ForeignKey(
@@ -165,6 +196,7 @@ class ProblemScore(models.Model):
         second = self.time_sec % 60
         return f"{minutes:2d}:{second:2d}"
 
+
 class ContestScore(models.Model):
     user = models.ForeignKey(
         settings.AUTH_USER_MODEL,
@@ -197,4 +229,66 @@ class ContestScore(models.Model):
         second = self.time_sec % 60
         return f"{minutes:2d}:{second:2d}"
     
-    
+
+class TestCase(models.Model):
+    problem = models.ForeignKey(
+        Problem,
+        verbose_name="問題",
+        on_delete=models.CASCADE,
+    )
+    title = models.CharField(
+        verbose_name="タイトル",
+        max_length=20,
+    )
+    note = models.TextField(
+        verbose_name="備考",
+        max_length=200,
+    )
+    test_input = models.TextField(
+        verbose_name="入力",
+        max_length=2000,
+    )
+    test_output = models.TextField(
+        verbose_name="出力",
+        max_length=2000,
+    )
+    is_sample = models.BooleanField(
+        verbose_name="サンプル",
+        default=False,
+    )
+
+    def __str__(self):
+        return "{}_{}".format(self.problem.title, self.title)
+
+
+class TestResult(models.Model):
+    submission = models.ForeignKey(
+        Submission,
+        verbose_name="提出",
+        on_delete=models.CASCADE,
+    )
+    test_case = models.ForeignKey(
+        TestCase,
+        verbose_name="テストケース",
+        on_delete=models.CASCADE,
+    )
+    status = models.CharField(
+        verbose_name="状態",
+        max_length=10,
+        default="WAIT",
+    )
+    output = models.TextField(
+        verbose_name="出力結果",
+        max_length=2000,
+        blank=True,
+        null=True,
+    )
+    error = models.TextField(
+        verbose_name="エラー出力",
+        max_length=2000,
+        blank=True,
+        null=True,
+    )
+
+    def __str__(self):
+        return "{}_{}".format(self.submission, self.status)
