@@ -10,7 +10,23 @@
             </h2>
         </div>
         <hr>
-        <div class="col-sm-12">
+        <div class="col-sm-12 mt-4">
+            <h3>プロフィール</h3>
+            <div class="row">
+                <div class="col-sm-3">ユーザー名：</div>
+                <div class="col-auto">{{user.username}}</div>
+            </div>
+            <div class="row">
+                <div class="col-sm-3">メールアドレス：</div>
+                <div class="col-auto">{{user.email}}</div>
+            </div>
+            <div class="row">
+                <div class="col-sm-3">メールアドレス：</div>
+                <div class="col-auto">{{user_profile.color}}</div>
+            </div>
+        </div>
+        <hr>
+        <div class="col-sm-12 mt-4">
             <h3>コンテスト成績</h3>
             <table class="table">
                 <thead>
