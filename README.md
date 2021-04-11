@@ -1,9 +1,19 @@
 # MatCoder
 
-## インストール
+## 動作環境
+- Python 3.8.6
+
+## 動作確認
+
+1. git clone
 ```
 git clone https://github.com/Joju-Matsumoto/matcoder.git
 cd matcoder
+```
+
+2. 仮想環境で必要ライブラリインストール
+```
+pip install -r requirements.txt
 ```
 
 
