@@ -2,12 +2,13 @@ import datetime
 from threading import Thread
 
 from django.shortcuts import render, redirect
-# from django.views.generic import TemplateView
-# Create your views here.
+from django.urls import reverse_lazy
 from django.utils import timezone
 from django.views import View
+from django.views.generic import FormView
 from django.contrib import messages
 
+# 型アノテーションのためだけのimport...
 from users.models import User
 
 from . import models
@@ -15,6 +16,34 @@ from . import forms
 from . import utils
 from . import docker
 from . import check_submission
+
+
+class MyPageView(View):
+    def get(self, request):
+        context = {}
+        if request.user.is_authenticated:
+            context["contest_scores"] = models.ContestScore.objects.filter(user=request.user).order_by("-contest__start_date")
+            # UserProfileの取得 or 新規作成
+            try:
+                user_profile = models.UserProfile.objects.get(user=request.user)
+            except:
+                user_profile = models.UserProfile.objects.create(user=request.user)
+            context["user_profile"] = user_profile
+            # UserProfileの変更フォーム
+            form = forms.UserProfileForm(instance=user_profile)
+            context["form"] = form
+        return render(request, "contests/my_page.html", context)
+    
+    def post(self, request):
+        if request.user.is_authenticated:
+            user_profile = models.UserProfile.objects.get(user=request.user)
+            form = forms.UserProfileForm(request.POST, instance=user_profile)
+            if form.is_valid():
+                form.save()
+        return redirect("contests:my_page")
+
+my_page_view = MyPageView.as_view()
+
 
 class IndexView(View):
     def get(self, request, *args, **kwargs):
@@ -75,9 +104,11 @@ def enter_contest(contest: models.Contest, user: User):
 class ContestDetailView(View):
     def get(self, request, short_name, *args, **kwargs):
         contest = models.Contest.objects.get(short_name=short_name)
+        author = models.Author.objects.get(contest=contest)
         context = {
             "is_live": contest.is_live(),
             "contest": contest,
+            "author": author,
             "problems": contest.problem_set.order_by("order"),
             # "start_date_str": contest.get_start_time_str(),
             # "end_date_str": contest.get_end_time_str(),
@@ -186,10 +217,12 @@ class ProblemDetailView(View):
     def get(self, request, short_name, problem_id, *args, **kwargs):
         contest = models.Contest.objects.get(short_name=short_name)
         problem = models.Problem.objects.get(pk=problem_id)
+        test_cases = models.TestCase.objects.filter(problem=problem, is_sample=True)
         context = {
             "contest": contest,
             "problem": problem,
             "form": forms.SubmissionForm(),
+            "test_cases": test_cases,
         }
         return render(request, "contests/problem_detail.html", context)
     
@@ -207,11 +240,12 @@ class ProblemDetailView(View):
             # リダイレクト
             return redirect("contests:submissions", short_name)
         else:   # 検証エラー
-            contest = models.Contest.objects.get(short_name=short_name)
+            test_cases = models.TestCase.objects.filter(problem=problem, is_sample=True)
             context = {
                 "contest": contest,
                 "problem": problem,
                 "form": form,
+                "test_cases": test_cases,
             }
             return render(request, "contests/problem_detail.html", context)
 
@@ -328,3 +362,155 @@ class CodeTestView(View):
             return render(request, "contests/code_test.html", context)
 
 code_test_view = CodeTestView.as_view()
+
+
+class ContestDetailEditView(View):
+    def get(self, request, short_name, *args, **kwargs):
+        contest = models.Contest.objects.get(short_name=short_name)
+        context = {
+            "contest": contest,
+            "form": forms.ContestEditForm(instance=contest),
+        }
+        return render(request, "contests/contest_detail_edit.html", context)
+    
+    def post(self, request, short_name, *args, **kwargs):
+        contest = models.Contest.objects.get(short_name=short_name)
+        form = forms.ContestEditForm(request.POST, instance=contest)
+        if form.is_valid():
+            form.save()
+            return redirect("contests:contest_detail_edit", short_name)
+        else:
+            context = {
+                "contest": contest,
+                "form": form,
+            }
+            return render(request, "contests/contest_detail_edit.html", context)
+
+contest_detail_edit_view = ContestDetailEditView.as_view()
+
+
+class ProblemsEditView(View):
+    def get(self, request, short_name, *args, **kwargs):
+        contest = models.Contest.objects.get(short_name=short_name)
+        problems = contest.problem_set.order_by("order")
+        form = forms.ProblemsAddForm()
+        context = {
+            "contest": contest,
+            "problems": problems,
+            "form": form,
+        }
+        return render(request, "contests/problems_edit.html", context)
+    
+    def post(self, request, short_name, *args, **kwargs):
+        contest = models.Contest.objects.get(short_name=short_name)
+        form = forms.ProblemsAddForm(request.POST)
+        if form.is_valid():
+            problem = form.save(commit=False)
+            problem.question = "ここに問題文を入力"
+            problem.answer = "ここにサンプルの答えを入力"
+            problem.contest = contest
+            problem.point = 100
+            problem.save()
+            print("made:", problem)
+            return redirect("contests:problem_detail_edit", contest.short_name, problem.pk)
+        else:
+            problems = contest.problem_set.order_by("order")
+            context = {
+                "contest": contest,
+                "problems": problems,
+                "form": form,
+            }
+            return render(request, "contests/problems_edit.html", context)
+            
+
+problems_edit_view = ProblemsEditView.as_view()
+
+
+class ProblemDetailEditView(View):
+    def get(self, request, short_name, problem_id, *args, **kwargs):
+        contest = models.Contest.objects.get(short_name=short_name)
+        problem = models.Problem.objects.get(pk=problem_id)
+        form = forms.ProblemEditForm(instance=problem)
+        test_cases = models.TestCase.objects.filter(problem=problem)
+        context = {
+            "contest": contest,
+            "problem": problem,
+            "form": form,
+            "test_cases": test_cases,
+        }
+        return render(request, "contests/problem_detail_edit.html", context)
+    
+    def post(self, request, short_name, problem_id, *args, **kwargs):
+        contest = models.Contest.objects.get(short_name=short_name)
+        problem = models.Problem.objects.get(pk=problem_id)
+        form = forms.ProblemEditForm(request.POST, instance=problem)
+        if form.is_valid():
+            problem = form.save()
+            return redirect("contests:problem_detail_edit", contest.short_name, problem.pk)
+        else:
+            test_cases = models.TestCase.objects.filter(problem=problem)
+            context = {
+                "contest": contest,
+                "problem": problem,
+                "form": form,
+                "test_cases": test_cases,
+            }
+            return render(request, "contests/problem_detail_edit.html", context)
+
+problem_detail_edit_view = ProblemDetailEditView.as_view()
+
+
+class TestCaseEditView(View):
+    def get(self, request, short_name, problem_id, test_case_id=None, *args, **kwargs):
+        contest = models.Contest.objects.get(short_name=short_name)
+        problem = models.Problem.objects.get(pk=problem_id)
+        test_case = None
+        is_add_page = True
+        if test_case_id is not None:
+            test_case = models.TestCase.objects.filter(problem=problem).get(pk=test_case_id)
+            is_add_page = False
+        form = forms.TestCaseEditForm(instance=test_case)
+        context = {
+            "contest": contest,
+            "problem": problem,
+            "form": form,
+            "is_add_page": is_add_page,
+        }
+        return render(request, "contests/test_case_edit.html", context)
+    
+    def post(self, request, short_name, problem_id, test_case_id=None, *args, **kwargs):
+        contest = models.Contest.objects.get(short_name=short_name)
+        problem = models.Problem.objects.get(pk=problem_id)
+        test_case = None
+        is_add_page = True
+        if test_case_id is not None:
+            test_case = models.TestCase.objects.filter(problem=problem).get(pk=test_case_id)
+            is_add_page = False
+        form = forms.TestCaseEditForm(request.POST, instance=test_case)
+        if form.is_valid():
+            test_case = form.save(commit=False)
+            test_case.problem = problem
+            test_case.save()
+            # return redirect("contests:test_case_edit", contest.short_name, problem.pk, test_case.id)
+            return redirect("contests:problem_detail_edit", contest.short_name, problem.pk)
+        else:
+            context = {
+                "contest": contest,
+                "problem": problem,
+                "form": form,
+                "is_add_page": is_add_page,
+            }
+            return render(request, "contests/test_case_edit.html", context)
+
+test_case_edit_view = TestCaseEditView.as_view()
+
+
+class TestCaseDeleteView(View):
+    def post(self, request, short_name, problem_id, test_case_id, *args, **kwargs):
+        # contest = models.Contest.objects.get(short_name=short_name)
+        # problem = models.Problem.objects.get(pk=problem_id)
+        test_case = models.TestCase.objects.get(pk=test_case_id)
+        test_case.delete()
+        return redirect("contests:problem_detail_edit", short_name, problem_id)
+
+test_case_delete_view = TestCaseDeleteView.as_view()
