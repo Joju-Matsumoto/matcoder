@@ -1,0 +1,38 @@
+{% extends 'base.html' %}
+
+
+{% block page_title %}
+    Edit:{{contest.short_name}}
+{% endblock page_title %}
+
+
+{% block content %}
+
+{% comment %} 編集ページ共通のバー {% endcomment %}
+<div class="row">
+    <div class="col-12 mt-4 text-center">
+        <h3>{{contest.title}}</h3>
+    </div>
+    <div class="col-12">
+        <ul class="nav nav-tabs navbar-dark mb-4">
+            <li class="nav-item">
+                <a class="nav-link {% block contest_tab_detail %}{% endblock %}" href="{% url 'contests:contest_detail_edit' contest.short_name %}">
+                    {% include 'icons/house-fill.svg' %}
+                    トップ
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link {% block contest_tab_problems %}{% endblock %}" href="{% url 'contests:problems_edit' contest.short_name %}">
+                    {% include 'icons/list-task.svg' %}
+                    問題
+                </a>
+            </li>
+        </ul>
+    </div>
+</div>
+
+{% block contest_content %}
+{% comment %} オーバーライド {% endcomment %}
+{% endblock contest_content %}
+
+{% endblock content %}

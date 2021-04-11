@@ -32,7 +32,7 @@
                             {{ submission.problem.title }}
                         </a>
                     </td>
-                    <td>{{ submission.user }}</td>
+                    <td>{{ submission.user.get_colored_username|safe }}</td>
                     <td>{{ submission.point }}</td>
                     <td>
                         {% if submission.judged_test_case < submission.total_test_case %} {% comment %} ジャッジ中 {% endcomment %}

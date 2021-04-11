@@ -20,7 +20,7 @@
             {% for row in table_rows %}
                 <tr {% if row.user == user %}class="table-primary"{% endif %}>
                     <td>{{ row.order }}</td>
-                    <td class="text-start fw-bold">{{ row.user }}</td>
+                    <td class="text-start fw-bold">{{ row.user.get_colored_username|safe }}</td>
                     <td>
                         <span class="span-total-score fw-bold">{{ row.score }}</span>
                         {% if row.penalty != 0 %}

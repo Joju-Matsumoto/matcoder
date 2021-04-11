@@ -17,8 +17,13 @@
                 </form>
             {% else %}
                 {% comment %} 参加済 {% endcomment %}
-                <button type="button" class="btn btn-secondary btn-lg" disabled>参加済</button>
+                <div class="p-3">
+                    <button type="button" class="btn btn-secondary btn-lg" disabled>参加済</button>
+                </div>
             {% endif %}
+        {% endif %}
+        {% if user in author.users.all %}
+            <a class="btn btn-success" href="{% url 'contests:contest_detail_edit' contest.short_name %}">編集</a>
         {% endif %}
     </div>
 </div>
@@ -27,6 +32,7 @@
     <h3>コンテスト情報</h3>
     <ul>
         <li>コンテスト時間: {{ contest.get_time_hour }}分</li>
+        <li>writer: {{ author.get_author_names_str|safe }}</li>
         <li>ペナルティ: {{ contest.penalty }}分</li>
     </ul>
 </div>

@@ -1,0 +1,63 @@
+{% extends 'contests/contest_edit_base.html' %}
+
+
+{% block contest_tab_problems %}active{% endblock contest_tab_problems %}
+
+
+{% block contest_content %}
+<div class="row ps-5 pe-5">
+    <div class="col-sm-12">
+        <h3>問題一覧</h3>
+    </div>
+</div>
+<div class="row ps-5 pe-5">
+    <table class="table table-bordered table-striped">
+        <thead>
+            <tr>
+                <th width="5%"></th>
+                <th>問題名</th>
+                <th>配点</th>
+                <th></th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for problem in problems %}
+                <tr>
+                    <td class="text-center">
+                        <a href="{% url 'contests:problem_detail' contest.short_name problem.pk %}">{{problem.order}}</a>
+                    </td>
+                    <td>
+                        <a href="{% url 'contests:problem_detail' contest.short_name problem.pk %}">{{problem.title}}</a>
+                    </td>
+                    <td>
+                        {{problem.point}}
+                    </td>
+                    <td>
+                        <a href="{% url 'contests:problem_detail_edit' contest.short_name problem.pk %}" class="btn btn-primary btn-sm">編集</a>
+                    </td>
+                </tr>
+            {% endfor %}
+            <tr>
+                <form action="" method="post">
+                    {% csrf_token %}
+                    <td>
+                        {{form.order}}
+                        <span class="error_message">
+                            {{form.order.errors}}
+                        </span>
+                    </td>
+                    <td>
+                        {{form.title}}
+                        <span class="error_message">
+                            {{form.title.errors}}
+                        </span>
+                    </td>
+                    <td></td>
+                    <td><button class="btn btn-primary btn-sm">追加</button></td>
+                </form>
+            </tr>
+        </tbody>
+    </table>
+    {{form.non_field_error}}
+</div>
+{% endblock contest_content %}

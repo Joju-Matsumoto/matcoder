@@ -21,11 +21,23 @@
     <div class="col-sm-12 mb-3">
         {{ problem.question }}
     </div>
-
+    {% comment %} 入出力サンプルを表示 {% endcomment %}
+    {% for test_case in test_cases %}
+        <hr>
+        <h5>入力例{{forloop.counter}}</h5>
+        <div class="col-sm-12">
+            <pre class="code"><code>{{test_case.test_input}}</code></pre>
+        </div>
+        <h5>出力例{{forloop.counter}}</h5>
+        <div class="col-sm-12">
+            <pre class="code"><code>{{test_case.test_output}}</code></pre>
+        </div>
+    {% endfor %}
     {% comment %} ログイン済の場合は解答提出フォームを表示する {% endcomment %}
 
     {% comment %} 解答提出フォームの表示 {% endcomment %}
     {% comment %} フォーム本体 {% endcomment %}
+    <hr>
     <form action="" method="post" class="form">
         {% csrf_token %}
         {% for field in form %}
@@ -36,7 +48,7 @@
                 {{field}}
             </div>
             {% if field.errors %}
-                <div class="col-auto">
+                <div class="col-auto error_message">
                     {{ field.errors }}
                 </div>
             {% endif %}
@@ -48,7 +60,9 @@
     {% comment %} 全体エラーメッセージ {% endcomment %}
     {% if form.non_field_errors %}
         {% for non_field_error in form.non_field_errors %}
-            {{ non_field_error }}
+            <div class="col-sm-12 error_message">
+                {{ non_field_error }}
+            </div>
         {% endfor %}
     {% endif %}
     {% comment %} ログインしていない人 {% endcomment %}

@@ -1,0 +1,77 @@
+{% extends 'contests/contest_edit_base.html' %}
+
+
+{% block contest_tab_problems %}active{% endblock contest_tab_problems %}
+
+
+{% block contest_content %}
+
+<div class="row ps-5 pe-5">
+    <div class="col-sm-12">
+        <h3>問題編集ページ</h3>
+    </div>
+</div>
+<form action="" method="post">
+    {% csrf_token %}
+    {% for field in form %}
+        <div class="row ps-5 pe-5">
+            <div class="col-sm-12 form-label">
+                {{field.label}}
+            </div>
+            <div class="col-sm-12 mb-3">
+                {{field}}
+            </div>
+            {% if field.errors %}
+                <div class="col-sm-12">
+                    <span class="error_message">
+                        {{field.errors}}
+                    </span>
+                </div>
+            {% endif %}
+        </div>
+    {% endfor %}
+    <div class="col-sm-12 mb-3 ms-5">
+        <button class="btn btn-primary">変更</button>
+    </div>
+</form>
+<div class="row ps-5 pe-5 pt-3">
+    <div class="col-sm-12">
+        <h3>テストケース</h3>
+    </div>
+    <table class="table table-bordered table-striped">
+        <thead>
+            <tr>
+                <th width="10%">テストケース名</th>
+                <th width="30%">入力</th>
+                <th width="30%">出力</th>
+                <th width="10%"></th>
+                <th width="10%"></th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for test_case in test_cases %}
+                <tr>
+                    <td>{{test_case.title}}</td>
+                    <td>{{test_case.test_input}}</td>
+                    <td>{{test_case.test_output}}</td>
+                    <td>
+                        <a href="{% url 'contests:test_case_edit' contest.short_name problem.pk test_case.pk %}" class="btn btn-primary btn-sm">編集</a>
+                    </td>
+                    <td>
+                        <form method="post" action="{% url 'contests:test_case_delete' contest.short_name problem.pk test_case.pk %}">
+                            {% csrf_token %}
+                            <button class="btn btn-danger btn-sm">削除</button>
+                        </form>
+                    </td>
+                </tr>
+            {% endfor %}
+            <tr>
+                <td class="text-center" colspan="3"><a href="{% url 'contests:test_case_add' contest.short_name problem.pk %}" class="btn btn-primary btn-sm">追加</a></td>
+                <td></td>
+                <td></td>
+            </tr>
+        </tbody>
+    </table>
+</div>
+
+{% endblock contest_content %}

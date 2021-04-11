@@ -1,0 +1,31 @@
+{% extends 'contests/contest_edit_base.html' %}
+
+
+{% block contest_tab_problems %}active{% endblock contest_tab_problems %}
+
+
+{% block contest_content %}
+
+<div class="row ps-5 pe-5">
+    <div class="col-sm-12">
+        <h3>テストケース {% if is_add_page %}追加{% else %}編集{% endif %} ページ</h3>
+    </div>
+</div>
+<div class="row p-5">
+    <form action="" method="post">
+        {% csrf_token %}
+        {% for field in form %}
+            <div class="col-sm-12 form-label">
+                {{field.label}}
+            </div>
+            <div class="col-sm-12 mb-3">
+                {{field}}
+            </div>
+        {% endfor %}
+        <div class="col-sm-12">
+            <button class="btn btn-primary">{% if is_add_page %}追加{% else %}変更{% endif %}</button>
+        </div>
+    </form>
+</div>
+
+{% endblock contest_content %}

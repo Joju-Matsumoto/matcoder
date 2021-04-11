@@ -17,7 +17,7 @@
                     トップ
                 </a>
             </li>
-            {% if user in contest.users.all %}
+            {% if user in contest.users.all or contest.is_past_contest %}
             <li class="nav-item">
                 <a class="nav-link {% block contest_tab_problems %}{% endblock %}" href="{% url 'contests:problems' contest.short_name %}">
                     {% include 'icons/list-task.svg' %}
