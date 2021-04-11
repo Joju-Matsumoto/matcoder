@@ -21,7 +21,8 @@ def check_answer(submission: models.Submission):
         if status != "AC":
             accepted = False
             submission.accepted = False
-        submission.status = status
+        if submission.status not in ["RE", "WA", "TLE"]:
+            submission.status = status
         submission.judged_test_case += 1
         submission.save()   # 1つのTestCaseごとにデータベースを更新
         print(test_case, status)

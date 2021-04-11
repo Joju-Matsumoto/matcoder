@@ -108,7 +108,6 @@ class Problem(models.Model):
         verbose_name="問題番号(アルファベット)",
         max_length=5,
         default="A",
-        unique=True,
     )
     title = models.CharField(
         verbose_name="タイトル",
