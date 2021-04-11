@@ -3,7 +3,10 @@ from django.conf import settings
 from django.utils import timezone
 from django.utils.timezone import localtime
 
+from colorfield.fields import ColorField
+
 from . import utils
+
 
 class Contest(models.Model):
     """コンテストモデル"""
@@ -78,12 +81,34 @@ class Contest(models.Model):
         return minute
 
 
+class Author(models.Model):
+    """コンテスト作者モデル"""
+    users = models.ManyToManyField(
+        settings.AUTH_USER_MODEL,
+        verbose_name="作者",
+        blank=True,
+    )
+    contest = models.ForeignKey(
+        Contest,
+        on_delete=models.CASCADE,
+        verbose_name="コンテスト",
+    )
+
+    def __str__(self):
+        return "Contest:{} author:{}".format(self.contest, ",".join(map(str, self.users.all())))
+    
+    def get_author_names_str(self) -> str:
+        """色付きユーザーネームの文字列を返す"""
+        return ",".join(map(lambda x: x.get_colored_username(), self.users.all()))
+
+
 class Problem(models.Model):
     """問題モデル"""
     order = models.CharField(
         verbose_name="問題番号(アルファベット)",
         max_length=5,
         default="A",
+        unique=True,
     )
     title = models.CharField(
         verbose_name="タイトル",
@@ -194,7 +219,7 @@ class ProblemScore(models.Model):
     def get_time_str(self) -> str:
         minutes = self.time_sec // 60
         second = self.time_sec % 60
-        return f"{minutes:2d}:{second:2d}"
+        return f"{minutes:02d}:{second:02d}"
 
 
 class ContestScore(models.Model):
@@ -227,7 +252,7 @@ class ContestScore(models.Model):
     def get_time_str(self) -> str:
         minutes = self.time_sec // 60
         second = self.time_sec % 60
-        return f"{minutes:2d}:{second:2d}"
+        return f"{minutes:02d}:{second:02d}"
     
 
 class TestCase(models.Model):
@@ -292,3 +317,25 @@ class TestResult(models.Model):
 
     def __str__(self):
         return "{}_{}".format(self.submission, self.status)
+
+
+class UserProfile(models.Model):
+    user = models.OneToOneField(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        verbose_name="ユーザー",
+    )
+    color = ColorField(
+        default="#000000",
+        verbose_name="カラー",
+    )
+    organization = models.CharField(
+        verbose_name="所属",
+        max_length=200,
+        blank=True,
+        null=True,
+    )
+
+    def __str__(self):
+        return "<UserProfile: {}>".format(self.user.username)
+    
