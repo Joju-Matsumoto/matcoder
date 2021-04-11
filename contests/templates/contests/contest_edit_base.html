@@ -8,6 +8,7 @@
 
 {% block content %}
 
+{% if user in author.users.all %}
 {% comment %} 編集ページ共通のバー {% endcomment %}
 <div class="row">
     <div class="col-12 mt-4 text-center">
@@ -31,8 +32,19 @@
     </div>
 </div>
 
+
 {% block contest_content %}
 {% comment %} オーバーライド {% endcomment %}
 {% endblock contest_content %}
+
+{% else %}
+
+<div class="row p-5">
+    <div class="col-sm-12 text-center">
+        <h3>不正なアクセス</h3>
+    </div>
+</div>
+
+{% endif %}
 
 {% endblock content %}
