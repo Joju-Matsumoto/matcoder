@@ -39,6 +39,7 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     "users.apps.UsersConfig",   # 追加
     "contests.apps.ContestsConfig", # 追加
+    "colorfield",   # 追加
 ]
 
 MIDDLEWARE = [
