@@ -1,4 +1,5 @@
 # MatCoder
+AtCoderっぽいものを再現してみました。
 
 ## 動作環境
 - Python 3.8.6
@@ -16,6 +17,10 @@ cd matcoder
 pip install -r requirements.txt
 ```
 
+3. 実行
+```
+python manage.py runserver
+```
 
 ## 苦労した点
 
