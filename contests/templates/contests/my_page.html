@@ -1,0 +1,84 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="row p-3">
+    {% if user.is_authenticated %}
+        <div class="col-sm-12 text-center">
+            <h2>
+                {{user.get_colored_username|safe}}
+                <small>さんのマイページ</small>
+            </h2>
+        </div>
+        <hr>
+        <div class="col-sm-12 mt-4">
+            <h3>プロフィール</h3>
+            <div class="row mt-3">
+                <div class="col-sm-3">ユーザー名：</div>
+                <div class="col-sm-4 mb-3">
+                    {{user.get_colored_username|safe}}
+                </div>
+            </div>
+            {{form.media}}
+            <div class="row">
+                <form action="" method="post">{% comment %} ユーザーカラーの変更フォーム {% endcomment %}
+                    {% csrf_token %}
+                    <div class="col-sm mb-3">
+                        {{form.color.label}}
+                        {{form.color}}
+                    </div>
+                    <div class="col-sm-12 mb-3">
+                        {{form.organization.label}}
+                        {{form.organization}}
+                    </div>
+                    <div class="col-sm-2 mb-4">
+                        <button class="btn btn-primary btn-sm">変更</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+        <hr>
+        <div class="col-sm-12 mt-4">
+            <h3>コンテスト成績</h3>
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>日時</th>
+                        <th>コンテスト名</th>
+                        {% comment %} 順位も表示したい {% endcomment %}
+                        <th>順位</th>   
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for contest_score in contest_scores %}
+                        {% if contest_score.contest.is_past_contest %}
+                            <tr>
+                                <td>{{contest_score.contest.get_start_time_str}}</td>
+                                <td>{{contest_score.contest.title}}</td>
+                            </tr>
+                        {% endif %}
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        <div class="col-sm-12 mt-4">
+            <a class="btn btn-outline-secondary" href="{% url 'users:logout' %}">ログアウト</a>
+        </div>
+        {% if user.is_superuser %}
+            <div class="col-sm-12 mt-4">
+                管理者アカウントです
+                <a class="btn btn-primary" href="{% url 'admin:index' %}">アドミン</a>
+            </div>
+        {% endif %}
+    {% else %}
+        <div class="col-sm-12 text-center">
+            <h2>ゲストユーザー</h2>
+        </div>
+        <hr>
+        <div class="col-sm-12 text-center">
+            <a class="btn btn-outline-primary" href="{% url 'users:login' %}">ログイン</a>
+            もしくは
+            <a class="btn btn-outline-primary" href="{% url 'users:signup' %}">新規登録</a>
+        </div>
+    {% endif %}
+</div>
+{% endblock content %}
