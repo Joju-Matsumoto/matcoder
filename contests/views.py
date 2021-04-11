@@ -1,7 +1,7 @@
 import datetime
 from threading import Thread
 
-from django.shortcuts import render, redirect
+from django.shortcuts import render, redirect, get_object_or_404
 from django.urls import reverse_lazy
 from django.utils import timezone
 from django.views import View
@@ -103,8 +103,12 @@ def enter_contest(contest: models.Contest, user: User):
 
 class ContestDetailView(View):
     def get(self, request, short_name, *args, **kwargs):
-        contest = models.Contest.objects.get(short_name=short_name)
-        author = models.Author.objects.get(contest=contest)
+        contest = get_object_or_404(models.Contest, short_name=short_name)
+        try:
+            author = models.Author.objects.get(contest=contest)
+        except:
+            author = models.Author.objects.create(contest=contest)
+            author.save()
         context = {
             "is_live": contest.is_live(),
             "contest": contest,
@@ -116,7 +120,7 @@ class ContestDetailView(View):
         return render(request, "contests/contest_detail.html", context)
     
     def post(self, request, short_name, *args, **kwargs):
-        contest = models.Contest.objects.get(short_name=short_name)
+        contest = get_object_or_404(models.Contest, short_name=short_name)
         if request.user.is_authenticated:   # ログイン済ユーザー
             # コンテスト参加処理
             enter_contest(contest, request.user)
@@ -129,7 +133,7 @@ contest_detail_view = ContestDetailView.as_view()
 
 class ProblemsView(View):
     def get(self, request, short_name, *args, **kwargs):
-        contest = models.Contest.objects.get(short_name=short_name)
+        contest = get_object_or_404(models.Contest, short_name=short_name)
         context = {
             "contest": contest,
             "problems": contest.problem_set.order_by("order"),
@@ -215,8 +219,8 @@ def submit(submission: models.Submission, contest: models.Contest, problem: mode
 
 class ProblemDetailView(View):
     def get(self, request, short_name, problem_id, *args, **kwargs):
-        contest = models.Contest.objects.get(short_name=short_name)
-        problem = models.Problem.objects.get(pk=problem_id)
+        contest = get_object_or_404(models.Contest, short_name=short_name)
+        problem = get_object_or_404(models.Problem, pk=problem_id)
         test_cases = models.TestCase.objects.filter(problem=problem, is_sample=True)
         context = {
             "contest": contest,
@@ -227,8 +231,8 @@ class ProblemDetailView(View):
         return render(request, "contests/problem_detail.html", context)
     
     def post(self, request, short_name, problem_id, *args, **kwargs):
-        contest = models.Contest.objects.get(short_name=short_name)
-        problem = models.Problem.objects.get(pk=problem_id)
+        contest = get_object_or_404(models.Contest, short_name=short_name)
+        problem = get_object_or_404(models.Problem, pk=problem_id)
         form = forms.SubmissionForm(request.POST)
         if form.is_valid(): # 検証ずみ
             submission = form.save(commit=False)    # DBに保存せずにインスタンス化
@@ -256,7 +260,7 @@ class SubmissionsView(View):
     def get(self, request, short_name, *args, **kwargs):
         if not request.user.is_authenticated:   # 要ログイン
             return redirect("users:index")
-        contest = models.Contest.objects.get(short_name=short_name)
+        contest = get_object_or_404(models.Contest, short_name=short_name)
         submissions = models.Submission.objects.filter(problem__contest=contest).order_by("-submission_date")
         if contest.is_live():   # 開催中はユーザは自分の提出のみ見られる
             submissions = submissions.filter(user=request.user)
@@ -273,7 +277,7 @@ class SubmissionsMeView(View):
     def get(self, request, short_name, *args, **kwargs):
         if not request.user.is_authenticated:   # 要ログイン
             return redirect("users:index")
-        contest = models.Contest.objects.get(short_name=short_name)
+        contest = get_object_or_404(models.Contest, short_name=short_name)
         submissions = models.Submission.objects.filter(problem__contest=contest).filter(user=request.user).order_by("-submission_date")
         context = {
             "contest": contest,
@@ -286,7 +290,7 @@ submissions_me_view = SubmissionsMeView.as_view()
 
 class SubmissionDetailView(View):
     def get(self, request, short_name, submission_id, *args, **kwargs):
-        contest = models.Contest.objects.get(short_name=short_name)
+        contest = get_object_or_404(models.Contest, short_name=short_name)
         submission = models.Submission.objects.get(pk=submission_id)
         problem = submission.problem
         context = {
@@ -302,7 +306,7 @@ submission_detail_view = SubmissionDetailView.as_view()
 
 class StandingsView(View):
     def get(self, request, short_name, *args, **kwargs):
-        contest = models.Contest.objects.get(short_name=short_name)
+        contest = get_object_or_404(models.Contest, short_name=short_name)
         problems = sorted(list(models.Problem.objects.filter(contest=contest)), key=lambda x: x.order)
         problem_scores = models.ProblemScore.objects.filter(problem__in=problems)
         contest_scores = sorted(list(models.ContestScore.objects.filter(contest=contest)), key=lambda x: (-x.score, x.time_sec))
@@ -314,9 +318,8 @@ class StandingsView(View):
                 "penalty": contest_score.penalty,
                 "problem_scores": sorted(list(problem_scores.filter(user=contest_score.user)), key=lambda x: x.problem.order),
             } for i, contest_score in enumerate(contest_scores)]
-
         context = {
-            "contest": models.Contest.objects.get(short_name=short_name),
+            "contest": contest,
             "problems": problems,
             "contest_scores": contest_scores,
             "table_rows": table_rows,
@@ -366,7 +369,7 @@ code_test_view = CodeTestView.as_view()
 
 class ContestDetailEditView(View):
     def get(self, request, short_name, *args, **kwargs):
-        contest = models.Contest.objects.get(short_name=short_name)
+        contest = get_object_or_404(models.Contest, short_name=short_name)
         context = {
             "contest": contest,
             "form": forms.ContestEditForm(instance=contest),
@@ -374,7 +377,7 @@ class ContestDetailEditView(View):
         return render(request, "contests/contest_detail_edit.html", context)
     
     def post(self, request, short_name, *args, **kwargs):
-        contest = models.Contest.objects.get(short_name=short_name)
+        contest = get_object_or_404(models.Contest, short_name=short_name)
         form = forms.ContestEditForm(request.POST, instance=contest)
         if form.is_valid():
             form.save()
@@ -391,7 +394,7 @@ contest_detail_edit_view = ContestDetailEditView.as_view()
 
 class ProblemsEditView(View):
     def get(self, request, short_name, *args, **kwargs):
-        contest = models.Contest.objects.get(short_name=short_name)
+        contest = get_object_or_404(models.Contest, short_name=short_name)
         problems = contest.problem_set.order_by("order")
         form = forms.ProblemsAddForm()
         context = {
@@ -402,7 +405,7 @@ class ProblemsEditView(View):
         return render(request, "contests/problems_edit.html", context)
     
     def post(self, request, short_name, *args, **kwargs):
-        contest = models.Contest.objects.get(short_name=short_name)
+        contest = get_object_or_404(models.Contest, short_name=short_name)
         form = forms.ProblemsAddForm(request.POST)
         if form.is_valid():
             problem = form.save(commit=False)
@@ -428,8 +431,8 @@ problems_edit_view = ProblemsEditView.as_view()
 
 class ProblemDetailEditView(View):
     def get(self, request, short_name, problem_id, *args, **kwargs):
-        contest = models.Contest.objects.get(short_name=short_name)
-        problem = models.Problem.objects.get(pk=problem_id)
+        contest = get_object_or_404(models.Contest, short_name=short_name)
+        problem = get_object_or_404(models.Problem, pk=problem_id)
         form = forms.ProblemEditForm(instance=problem)
         test_cases = models.TestCase.objects.filter(problem=problem)
         context = {
@@ -441,8 +444,8 @@ class ProblemDetailEditView(View):
         return render(request, "contests/problem_detail_edit.html", context)
     
     def post(self, request, short_name, problem_id, *args, **kwargs):
-        contest = models.Contest.objects.get(short_name=short_name)
-        problem = models.Problem.objects.get(pk=problem_id)
+        contest = get_object_or_404(models.Contest, short_name=short_name)
+        problem = get_object_or_404(models.Problem, pk=problem_id)
         form = forms.ProblemEditForm(request.POST, instance=problem)
         if form.is_valid():
             problem = form.save()
@@ -462,8 +465,8 @@ problem_detail_edit_view = ProblemDetailEditView.as_view()
 
 class TestCaseEditView(View):
     def get(self, request, short_name, problem_id, test_case_id=None, *args, **kwargs):
-        contest = models.Contest.objects.get(short_name=short_name)
-        problem = models.Problem.objects.get(pk=problem_id)
+        contest = get_object_or_404(models.Contest, short_name=short_name)
+        problem = get_object_or_404(models.Problem, pk=problem_id)
         test_case = None
         is_add_page = True
         if test_case_id is not None:
@@ -479,8 +482,8 @@ class TestCaseEditView(View):
         return render(request, "contests/test_case_edit.html", context)
     
     def post(self, request, short_name, problem_id, test_case_id=None, *args, **kwargs):
-        contest = models.Contest.objects.get(short_name=short_name)
-        problem = models.Problem.objects.get(pk=problem_id)
+        contest = get_object_or_404(models.Contest, short_name=short_name)
+        problem = get_object_or_404(models.Problem, pk=problem_id)
         test_case = None
         is_add_page = True
         if test_case_id is not None:
@@ -507,8 +510,8 @@ test_case_edit_view = TestCaseEditView.as_view()
 
 class TestCaseDeleteView(View):
     def post(self, request, short_name, problem_id, test_case_id, *args, **kwargs):
-        # contest = models.Contest.objects.get(short_name=short_name)
-        # problem = models.Problem.objects.get(pk=problem_id)
+        # contest = get_object_or_404(models.Contest, short_name=short_name)
+        # problem = get_object_or_404(models.Problem, pk=problem_id)
         test_case = models.TestCase.objects.get(pk=test_case_id)
         test_case.delete()
         return redirect("contests:problem_detail_edit", short_name, problem_id)
