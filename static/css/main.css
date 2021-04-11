@@ -45,7 +45,7 @@ a {
     color: #888;
 }
 
-.span-penalty {
+.span-penalty, .error_message {
     color: #FF0000;
 }
 
@@ -53,10 +53,12 @@ thead > tr {
     font-weight: bold;
 }
 
-h2, h3 {
+h2, h3, h4, h5 {
     font-weight: bold;
 }
 
 .code {
+    padding: 10px;
     background-color: #eeeeee;
+    border-radius: 5px;
 }
