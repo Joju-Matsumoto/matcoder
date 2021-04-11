@@ -39,6 +39,10 @@ class Contest(models.Model):
         verbose_name="ペナルティ(分)",
         default=5,
     )
+    released = models.BooleanField(
+        verbose_name="公開済",
+        default=False,
+    )
 
     def __str__(self):
         return self.title

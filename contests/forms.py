@@ -30,11 +30,12 @@ class ContestEditForm(forms.ModelForm):
     """コンテスト編集用のフォーム"""
     class Meta:
         model = models.Contest
-        fields = ["abstract", "penalty"]
+        fields = ["abstract", "penalty", "released"]
 
         labels = {
             "abstract": "概要",
             "penalty": "ペナルティ(分)",
+            "released": "公開する",
         }
     
     # def __init__(self, *args, **kwargs):

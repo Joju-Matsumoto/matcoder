@@ -3,50 +3,58 @@
 {% block page_title %}{{contest.short_name}}{% endblock page_title %}
 
 {% block content %}
-{% comment %} コンテスト専用のバーを表示 {% endcomment %}
-<div class="row p-3">
-    <div class="col-sm-12 small">
-        <small class="span-time">コンテスト時間: {{contest.get_start_time_str}} ~ {{contest.get_end_time_str}}</small>
-    </div>
-    <div class="col-sm-12">
-        {% comment %} <h1>{{contest.title}}</h1> {% endcomment %}
-        <ul class="nav nav-tabs navbar-dark mb-4">
-            <li class="nav-item">
-                <a class="nav-link {% block contest_tab_detail %}{% endblock %}" href="{% url 'contests:contest_detail' contest.short_name %}">
-                    {% include 'icons/house-fill.svg' %}
-                    トップ
-                </a>
-            </li>
-            {% if user in contest.users.all or contest.is_past_contest %}
-            <li class="nav-item">
-                <a class="nav-link {% block contest_tab_problems %}{% endblock %}" href="{% url 'contests:problems' contest.short_name %}">
-                    {% include 'icons/list-task.svg' %}
-                    問題
-                </a>
-            </li>
-            <li class="nav-item dropdown">
-                <a class="nav-link dropdown-toggle  {% block contest_tab_submissions %}{% endblock %}" data-bs-toggle="dropdown" role="button" aria-expanded="false">
-                    {% include 'icons/list-check.svg' %}
-                    提出結果
-                </a>
-                <ul class="dropdown-menu">
-                    <li><a class="dropdown-item" href="{% url 'contests:submissions' contest.short_name %}">すべての提出</a></li>
-                    <li><a class="dropdown-item" href="{% url 'contests:submissions_me' contest.short_name %}">自分の提出</a></li>
-                </ul>
-            </li>
-            {% endif %}
-            <li class="nav-item">
-                <a class="nav-link {% block contest_tab_standings %}{% endblock %}" href="{% url 'contests:standings' contest.short_name %}">
-                    {% include 'icons/sort-down.svg' %}
-                    順位表
-                </a>
-            </li>
-        </ul>
-    </div>
+{% if contest.released %}
+    {% comment %} コンテスト専用のバーを表示 {% endcomment %}
+    <div class="row p-3">
+        <div class="col-sm-12 small">
+            <small class="span-time">コンテスト時間: {{contest.get_start_time_str}} ~ {{contest.get_end_time_str}}</small>
+        </div>
+        <div class="col-sm-12">
+            {% comment %} <h1>{{contest.title}}</h1> {% endcomment %}
+            <ul class="nav nav-tabs navbar-dark mb-4">
+                <li class="nav-item">
+                    <a class="nav-link {% block contest_tab_detail %}{% endblock %}" href="{% url 'contests:contest_detail' contest.short_name %}">
+                        {% include 'icons/house-fill.svg' %}
+                        トップ
+                    </a>
+                </li>
+                {% if user in contest.users.all or contest.is_past_contest %}
+                <li class="nav-item">
+                    <a class="nav-link {% block contest_tab_problems %}{% endblock %}" href="{% url 'contests:problems' contest.short_name %}">
+                        {% include 'icons/list-task.svg' %}
+                        問題
+                    </a>
+                </li>
+                <li class="nav-item dropdown">
+                    <a class="nav-link dropdown-toggle  {% block contest_tab_submissions %}{% endblock %}" data-bs-toggle="dropdown" role="button" aria-expanded="false">
+                        {% include 'icons/list-check.svg' %}
+                        提出結果
+                    </a>
+                    <ul class="dropdown-menu">
+                        <li><a class="dropdown-item" href="{% url 'contests:submissions' contest.short_name %}">すべての提出</a></li>
+                        <li><a class="dropdown-item" href="{% url 'contests:submissions_me' contest.short_name %}">自分の提出</a></li>
+                    </ul>
+                </li>
+                {% endif %}
+                <li class="nav-item">
+                    <a class="nav-link {% block contest_tab_standings %}{% endblock %}" href="{% url 'contests:standings' contest.short_name %}">
+                        {% include 'icons/sort-down.svg' %}
+                        順位表
+                    </a>
+                </li>
+            </ul>
+        </div>
 
-    {% block contest_content %}
-    {% comment %} オーバーライド {% endcomment %}
-    {% endblock contest_content %}
+        {% block contest_content %}
+        {% comment %} オーバーライド {% endcomment %}
+        {% endblock contest_content %}
+    </div>
+{% else %}
+<div class="row p-5">
+    <div class="col-sm-12 text-center">
+        <h3>作成中です</h3>
+    </div>
 </div>
+{% endif %}
 
 {% endblock content %}
