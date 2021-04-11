@@ -3,7 +3,7 @@
 {% block page_title %}{{contest.short_name}}{% endblock page_title %}
 
 {% block content %}
-{% if contest.released %}
+{% if contest.released or user in contest.author.users.all %}
     {% comment %} コンテスト専用のバーを表示 {% endcomment %}
     <div class="row p-3">
         <div class="col-sm-12 small">

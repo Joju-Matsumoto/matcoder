@@ -83,6 +83,16 @@ class Contest(models.Model):
         dt = self.end_date - self.start_date
         minute = int(dt.total_seconds()) // 60
         return minute
+    
+    def author(self):
+        """逆参照(テンプレートで使用)
+        """
+        try:
+            author = Author.objects.get(contest=self)
+        except:
+            author = Author.objects.create(contest=self)
+            author.save()
+        return author
 
 
 class Author(models.Model):
