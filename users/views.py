@@ -7,16 +7,25 @@ from django.views import View
 
 from . import models, forms
 
-# 邪道...
-from contests.models import ContestScore
+# contests側にmy_pageをおいたので必要なくなった．
+# # 邪道...
+# from contests.models import ContestScore, UserProfile
 
 
 class IndexView(View):
     def get(self, request):
-        context = {}
-        if request.user.is_authenticated:
-            context["contest_scores"] = ContestScore.objects.filter(user=request.user).order_by("-contest__start_date")
-        return render(request, "users/index.html", context)
+        # リダイレクト，ずるい...?
+        return redirect("contests:my_page")
+        # context = {}
+        # if request.user.is_authenticated:
+        #     context["contest_scores"] = ContestScore.objects.filter(user=request.user).order_by("-contest__start_date")
+        #     # contests用のユーザープロフィールの 取得 or 新規作成
+        #     try:
+        #         user_profile = UserProfile.objects.get(user=request.user)
+        #     except:
+        #         user_profile = UserProfile.objects.create(user=request.user)
+        #     context["user_profile"] = user_profile
+        # return render(request, "users/index.html", context)
 
 index_view = IndexView.as_view()
 
