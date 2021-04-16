@@ -18,6 +18,10 @@
 ## 動作環境
 - Python 3.8.6
 - `docker run`コマンドが使える状態
+- (追記) Docker Hubから，公式のPythonイメージをダウンロードしておく
+```
+docker pull python:3.8
+```
 
 ## 動作確認
 
